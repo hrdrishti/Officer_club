@@ -4,260 +4,545 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IOCL Officer Club Restaurant — Reserve Your Table</title>
+  <title>IOCL Officer Club Restaurant — Order Food</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
     rel="stylesheet" />
+  <style>
+    /* ── Filter Pills ── */
+    .filter-pills {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .fpill {
+      padding: .35rem 1rem;
+      border-radius: 50px;
+      font-size: .75rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: var(--t-fast);
+      background: rgba(255, 255, 255, .8);
+      color: var(--ink-60);
+    }
+
+    .fpill.active {
+      background: var(--amber-grad);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: var(--s-amber);
+    }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 1.1rem;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: .7rem 1rem .7rem 2.6rem;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      background: rgba(255, 255, 255, .8);
+      font-size: .88rem;
+      font-family: inherit;
+      transition: var(--t-fast);
+    }
+
+    .search-wrap input:focus {
+      outline: none;
+      border-color: var(--amber);
+      background: #fff;
+      box-shadow: 0 0 0 4px var(--amber-soft);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: .9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-60);
+      pointer-events: none;
+    }
+
+    /* ── Menu Grid ── */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .menu-card {
+      background: var(--surface-hi);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1.1rem .9rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--t-base);
+      position: relative;
+      box-shadow: var(--s-xs);
+    }
+
+    .menu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--s-md);
+      border-color: var(--amber-light);
+    }
+
+    .menu-card.in-cart {
+      border-color: var(--amber);
+      background: rgba(232, 160, 48, .05);
+      box-shadow: var(--s-amber);
+    }
+
+    .mc-icon {
+      font-size: 2rem;
+      margin-bottom: .5rem;
+      line-height: 1;
+    }
+
+    .mc-name {
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: .25rem;
+    }
+
+    .mc-desc {
+      font-size: .68rem;
+      color: var(--ink-60);
+      line-height: 1.3;
+      margin-bottom: .4rem;
+    }
+
+    .mc-price {
+      font-size: .78rem;
+      font-weight: 800;
+      color: var(--amber-dark);
+    }
+
+    .mc-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: .55rem;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .veg {
+      background: #DCFCE7;
+      color: #166534;
+    }
+
+    .non {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    /* Qty control inside card */
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .5rem;
+    }
+
+    .qty-ctrl button {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: .9rem;
+      background: rgba(232, 160, 48, .1);
+      border: 1.5px solid var(--amber);
+      color: var(--amber-dark);
+      cursor: pointer;
+      transition: var(--t-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-ctrl button:hover {
+      background: var(--amber);
+      color: #fff;
+    }
+
+    .qty-ctrl span {
+      font-weight: 800;
+      font-size: .9rem;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* ── Cart Drawer ── */
+    .cart-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .6rem;
+      border-radius: var(--r-sm);
+      margin-bottom: .4rem;
+      background: var(--smoke);
+      font-size: .84rem;
+    }
+
+    .cart-totals {
+      font-size: .88rem;
+    }
+
+    .cart-totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: .3rem 0;
+    }
+
+    .cart-totals .row.total {
+      font-weight: 800;
+      font-size: 1rem;
+      border-top: 1.5px solid var(--border);
+      margin-top: .3rem;
+      padding-top: .5rem;
+    }
+
+    /* ── Booking Form Card ── */
+    .section-label {
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--ink-60);
+      margin-bottom: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Success Modal ── */
+    .success-check {
+      font-size: 3.5rem;
+      animation: pulse 1s ease-in-out;
+      margin-bottom: .8rem;
+    }
+
+    /* ── History ── */
+    .hist-item {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1rem 1.1rem;
+      margin-bottom: .7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: .8rem;
+      transition: var(--t-fast);
+    }
+
+    .hist-item:hover {
+      box-shadow: var(--s-sm);
+    }
+
+    .hist-ref {
+      font-size: .7rem;
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--ink-60);
+    }
+
+    .hist-name {
+      font-size: .88rem;
+      font-weight: 700;
+    }
+
+    .hist-date {
+      font-size: .75rem;
+      color: var(--ink-60);
+      margin-top: 2px;
+    }
+
+    .hist-orders {
+      font-size: .75rem;
+      color: var(--ink-60);
+      margin-top: 4px;
+      max-width: 220px;
+    }
+
+    .hist-total {
+      font-size: .88rem;
+      font-weight: 800;
+      color: var(--amber-dark);
+      white-space: nowrap;
+    }
+
+    .h-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .68rem;
+      font-weight: 700;
+    }
+
+    .st-confirmed {
+      background: #DCFCE7;
+      color: #166534;
+    }
+
+    .st-cancelled {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .st-completed {
+      background: #DBEAFE;
+      color: #1e40af;
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- TOAST CONTAINER -->
-  <div class="toast-container" id="toastContainer"></div>
-
   <!-- SESSION GUARD -->
   <script>
     var SESSION_KEY = "sg_session";
-    var s = sessionStorage.getItem(SESSION_KEY);
-    if (s !== "user" && s !== "admin") { window.location.replace("login.html"); }
+    if (!sessionStorage.getItem(SESSION_KEY)) window.location.replace("login.html");
   </script>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- NAVIGATION -->
   <nav>
     <a href="choice.html" class="nav-brand">
       IOCL Officer Club
-      <span>Fine Indian Cuisine</span>
+      <span>Fine Dining</span>
     </a>
     <ul class="nav-links">
+      <li><span id="navUserName" style="font-size:.82rem;font-weight:600;color:var(--ink-60);"></span></li>
+      <li><a href="menu.html" class="nav-link">Full Menu</a></li>
+      <li id="adminLink" style="display:none;"><a href="admin.html" class="nav-link">Admin</a></li>
       <li><a href="choice.html" class="nav-link">← Back</a></li>
-      <li><a href="menu.html" class="nav-link">Menu</a></li>
-      <li><a href="#" onclick="openHistory()" class="nav-link">My History</a></li>
-      <li id="adminLink" style="display:none"><a href="admin.html" class="nav-link text-gold">Admin</a></li>
-      <li id="navUserName"
-        style="font-size:0.78rem;color:var(--gold-dark);font-weight:600;padding:0.3rem 0.8rem;background:rgba(200,134,10,0.08);border-radius:50px;border:1px solid rgba(200,134,10,0.15);">
-      </li>
-      <li><button onclick="logout()" class="btn btn-secondary"
-          style="padding:0.4rem 1rem;font-size:0.8rem;">Logout</button></li>
     </ul>
   </nav>
 
-  <header class="hero" style="padding:2rem 1rem 1.5rem;">
-    <span class="badge" id="heroBadge">✦ Online Reservation ✦</span>
-    <h1 id="heroTitle" style="font-size:2rem;margin-bottom:0.5rem;">Experience the <em>Extraordinary</em></h1>
-    <p id="heroText" style="max-width:480px;font-size:0.88rem;">Order delicious food and enjoy authentic flavours.</p>
+  <!-- HERO -->
+  <header class="hero" style="padding:2.5rem 1rem 1.5rem;">
+    <span class="badge" id="heroBadge">🥡 Food Order</span>
+    <h1 id="heroTitle" style="font-size:clamp(1.8rem,4vw,3rem);margin-bottom:.6rem;">
+      Order <em>Delicious</em> Food
+    </h1>
+    <p id="heroText" style="font-size:.93rem;">Browse our menu, add to cart, and confirm your order in seconds.</p>
   </header>
 
-  <!-- BOOKING SECTION -->
-  <div class="container section">
+  <!-- MAIN SECTION -->
+  <div class="container section" style="padding-top:0;">
     <div class="booking-layout">
 
-      <!-- LEFT PANEL: Food Menu only -->
+      <!-- LEFT: Menu -->
       <div class="left-panel">
 
-        <!-- FOOD MENU -->
-        <div id="menuSection">
-          <h3 class="text-gold" style="margin-bottom:0.3rem;font-size:1.1rem;">🍽️ Select Your Dishes</h3>
-          <p class="text-muted" style="margin-bottom:0.5rem;font-size:0.82rem;">Pick items for your order. Cart updates
-            in real-time.</p>
-          <div id="guestMenusContainer" style="padding-right:6px;display:flex;flex-direction:column;gap:0;">
-            <p class="text-muted" style="text-align:center;padding:2rem;">Loading menu...</p>
+        <!-- Search + Filter -->
+        <div>
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="menuSearch" placeholder="Search dishes…" oninput="renderMenu()" />
+          </div>
+          <div class="filter-pills animate-children" id="filterPills">
+            <button class="fpill active" onclick="setFilter('all',this)">✨ All</button>
+            <button class="fpill" onclick="setFilter('starters',this)">🥟 Starters</button>
+            <button class="fpill" onclick="setFilter('mains',this)">🍛 Mains</button>
+            <button class="fpill" onclick="setFilter('breads',this)">🫓 Breads</button>
+            <button class="fpill" onclick="setFilter('desserts',this)">🍮 Desserts</button>
+            <button class="fpill" onclick="setFilter('drinks',this)">☕ Drinks</button>
           </div>
         </div>
 
-      </div><!-- /left-panel -->
+        <!-- Menu Grid -->
+        <div class="menu-grid animate-children" id="menuGrid">
+          <p class="text-muted" style="text-align:center;padding:2rem;grid-column:1/-1;">Loading menu…</p>
+        </div>
+      </div>
 
-      <!-- RIGHT: BOOKING FORM -->
+      <!-- RIGHT: Booking Form -->
       <div class="card form-card">
+        <div class="section-label">Your Order Details</div>
 
-        <!-- Form Header -->
-        <div style="margin-bottom:1.2rem;border-bottom:1px solid rgba(0,0,0,0.06);padding-bottom:0.8rem;">
-          <h3 id="formTitle" style="margin:0 0 0.2rem;font-size:1.1rem;">Order Details</h3>
-          <p id="formSubtitle" class="text-muted" style="margin:0;font-size:0.8rem;">Fill in your details below.</p>
+        <!-- Name -->
+        <div class="form-group">
+          <label class="form-label">👤 Full Name</label>
+          <input type="text" id="guestName" class="form-input" placeholder="Your name" />
         </div>
 
-        <form onsubmit="return false;">
-
-          <!-- Table Picker (BOTH mode only) -->
-          <div id="tablePicker" style="display:none;margin-bottom:0.9rem;">
-            <label class="form-label" style="font-size:0.78rem;">🪑 Select Table *</label>
-            <div id="tablePickerGrid"
-              style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.5rem;margin-top:0.4rem;">
-              <p class="text-muted" style="font-size:0.8rem;">Loading tables…</p>
-            </div>
-            <input type="hidden" id="selectedTableId" />
-            <input type="hidden" id="selectedTableName" />
+        <!-- Phone + Email -->
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label class="form-label">📱 Mobile</label>
+            <input type="tel" id="guestPhone" class="form-input" placeholder="+91 …" />
           </div>
-
-          <!-- Name -->
-          <div class="form-group" style="margin-bottom:0.75rem;">
-            <label class="form-label" style="font-size:0.78rem;">👤 Full Name *</label>
-            <input type="text" id="guestName" class="form-input" placeholder="Your full name" />
+          <div class="form-group">
+            <label class="form-label">📧 Email</label>
+            <input type="email" id="email" class="form-input" placeholder="Optional" />
           </div>
+        </div>
 
-          <!-- Phone + Email -->
-          <div class="form-row-2col" style="margin-bottom:0.75rem;">
-            <div>
-              <label class="form-label" style="font-size:0.78rem;">📱 Mobile *</label>
-              <input type="tel" id="guestPhone" class="form-input" placeholder="+91 xxxxx" />
-            </div>
-            <div>
-              <label class="form-label" style="font-size:0.78rem;">📧 Email</label>
-              <input type="email" id="email" class="form-input" placeholder="Optional" />
-            </div>
+        <!-- Date + Time -->
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label class="form-label">📅 Date</label>
+            <input type="date" id="dateInput" class="form-input" />
           </div>
-
-          <!-- Date + Time -->
-          <div class="form-row-2col" style="margin-bottom:0.75rem;">
-            <div>
-              <label class="form-label" style="font-size:0.78rem;">📅 Date *</label>
-              <input type="date" id="dateInput" class="form-input" style="padding:0.65rem;"
-                onchange="fetchAvailability()" />
-            </div>
-            <div>
-              <label class="form-label" style="font-size:0.78rem;">🕐 Time Slot *</label>
-              <select id="timeInput" class="form-select" style="padding:0.65rem;">
-                <option value="">Select Slot...</option>
-                <option>12:00 PM - 01:00 PM</option>
-                <option>01:00 PM - 02:00 PM</option>
-                <option>02:00 PM - 03:00 PM</option>
-                <option>03:00 PM - 04:00 PM</option>
-                <option>04:00 PM - 05:00 PM</option>
-                <option>05:00 PM - 06:00 PM</option>
-                <option>06:00 PM - 07:00 PM</option>
-                <option>07:00 PM - 08:00 PM</option>
-                <option>08:00 PM - 09:00 PM</option>
-                <option>09:00 PM - 10:00 PM</option>
-                <option>10:00 PM - 11:00 PM</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Guests -->
-          <div class="form-group" style="margin-bottom:0.75rem;">
-            <label class="form-label" style="font-size:0.78rem;">👥 No. of Guests</label>
-            <select id="guests" class="form-select">
-              <option value="1">1 Person</option>
-              <option value="2">2 People</option>
-              <option value="3">3 People</option>
-              <option value="4">4 People</option>
-              <option value="5">5 People</option>
-              <option value="6">6 People</option>
-              <option value="8">8 People</option>
-              <option value="10">10 People</option>
+          <div class="form-group">
+            <label class="form-label">🕐 Time Slot</label>
+            <select id="timeInput" class="form-select">
+              <option value="">Select…</option>
+              <option>12:00 PM - 01:00 PM</option>
+              <option>01:00 PM - 02:00 PM</option>
+              <option>02:00 PM - 03:00 PM</option>
+              <option>03:00 PM - 04:00 PM</option>
+              <option>04:00 PM - 05:00 PM</option>
+              <option>05:00 PM - 06:00 PM</option>
+              <option>06:00 PM - 07:00 PM</option>
+              <option>07:00 PM - 08:00 PM</option>
+              <option>08:00 PM - 09:00 PM</option>
+              <option>09:00 PM - 10:00 PM</option>
+              <option>10:00 PM - 11:00 PM</option>
             </select>
           </div>
+        </div>
 
-          <!-- Special Requests -->
-          <div class="form-group" style="margin-bottom:1rem;">
-            <label class="form-label" style="font-size:0.78rem;">📝 Special Requests</label>
-            <textarea id="special" class="form-input" rows="2"
-              placeholder="Dietary notes, seating preferences..."></textarea>
+        <!-- Guests -->
+        <div class="form-group">
+          <label class="form-label">👥 Guests</label>
+          <select id="guests" class="form-select">
+            <option value="1">1 Person</option>
+            <option value="2">2 People</option>
+            <option value="3">3 People</option>
+            <option value="4">4 People</option>
+            <option value="5">5 People</option>
+            <option value="6">6 People</option>
+            <option value="8">8 People</option>
+            <option value="10">10 People</option>
+          </select>
+        </div>
+
+        <!-- Special -->
+        <div class="form-group">
+          <label class="form-label">📝 Special Requests</label>
+          <textarea id="special" class="form-input" rows="2" placeholder="Dietary notes, allergies…"></textarea>
+        </div>
+
+        <!-- Cart Summary (mini) -->
+        <div id="miniCartSummary"
+          style="display:none;background:var(--amber-soft);border-radius:var(--r-sm);padding:.8rem;margin-bottom:.9rem;font-size:.82rem;">
+          <div style="font-weight:700;margin-bottom:.3rem;">🛒 Cart Summary</div>
+          <div id="miniCartItems" style="color:var(--ink-60);"></div>
+          <div
+            style="display:flex;justify-content:space-between;margin-top:.4rem;font-weight:800;color:var(--amber-dark);">
+            <span>Total (incl. 18% GST)</span><span id="miniCartTotal">₹0</span>
           </div>
+        </div>
 
-          <!-- Submit -->
-          <button onclick="submitBooking()" id="submitBtn" class="btn btn-primary" style="width:100%;">
-            ✔ Confirm Booking
-          </button>
+        <button onclick="submitBooking()" id="submitBtn" class="btn btn-primary" style="width:100%;">
+          ✔ Confirm Order
+        </button>
 
-        </form>
-      </div><!-- /form-card -->
+        <!-- History link -->
+        <button onclick="openHistoryModal()" class="btn btn-secondary"
+          style="width:100%;margin-top:.6rem;font-size:.82rem;">
+          📋 My Order History
+        </button>
+      </div>
 
     </div>
   </div>
 
-  <!-- FLOATING CART BUTTON -->
-  <button id="cartToggle" class="cart-toggle-btn" onclick="toggleCart()">
-    🛒 <span id="cartCountBadge" class="cart-badge">0</span>
+  <!-- CART FAB -->
+  <button class="cart-toggle-btn" onclick="toggleCart()" style="position:relative;">
+    🛒
+    <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
   </button>
 
   <!-- CART DRAWER -->
-  <div id="cartDrawer" class="cart-drawer">
+  <div class="cart-drawer" id="cartDrawer">
     <div class="cart-header">
-      <h4>🛒 Your Order</h4>
-      <button onclick="toggleCart()" class="btn-close">×</button>
+      <h4>🛒 Your Cart</h4>
+      <button class="btn-close" onclick="toggleCart()">×</button>
     </div>
-    <div id="cartItemsList" class="cart-body">
+    <div class="cart-body" id="cartBody">
       <p class="text-muted" style="text-align:center;padding:2rem;">Your cart is empty.</p>
     </div>
     <div class="cart-footer">
-      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-          <span>Subtotal</span><span id="cartSubtotalDisplay">₹0</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-          <span>GST (18%)</span><span id="cartGSTDisplay">₹0</span>
-        </div>
-        <div
-          style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;color:var(--text-main);border-top:1px solid rgba(0,0,0,0.07);padding-top:6px;margin-top:2px;">
-          <span>Total</span><span id="cartTotalDisplay">₹0</span>
-        </div>
+      <div class="cart-totals" id="cartTotals" style="display:none;">
+        <div class="row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+        <div class="row"><span>GST (18%)</span><span id="cartGST">₹0</span></div>
+        <div class="row total"><span>Total</span><span id="cartTotal">₹0</span></div>
       </div>
-      <button onclick="toggleCart()" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Close Cart</button>
     </div>
   </div>
 
   <!-- SUCCESS MODAL -->
   <div class="modal-backdrop" id="successModal">
-    <div class="modal-content" style="text-align:center;">
-      <div style="font-size:3.5rem;margin-bottom:0.8rem;">🎉</div>
-      <h2 class="text-gold" style="margin-bottom:0.5rem;">Booking Confirmed!</h2>
-      <p class="text-muted" style="font-size:0.88rem;">Your reservation has been secured successfully.</p>
-      <div id="modalRef"
-        style="background:var(--gold-soft);border:1px solid var(--gold);padding:0.8rem 1.2rem;border-radius:var(--radius-md);font-weight:800;margin:1.5rem 0;color:var(--gold-dark);letter-spacing:2px;font-family:monospace;font-size:1.1rem;box-shadow:inset 0 2px 4px rgba(255,255,255,0.8);">
-        SG-XXXX</div>
-      <button onclick="closeSuccess()" class="btn btn-primary" style="padding:0.75rem 2.5rem;">Done ✔</button>
+    <div class="modal-content">
+      <div class="success-check">✅</div>
+      <h2 style="margin-bottom:.5rem;">Order Confirmed!</h2>
+      <p class="text-muted" style="font-size:.88rem;">Your booking reference:</p>
+      <code id="modalRef"
+        style="display:block;font-size:1.2rem;font-weight:800;margin:.6rem 0 1rem;color:var(--amber-dark);letter-spacing:1px;"></code>
+      <p class="text-muted" style="font-size:.82rem;margin-bottom:1.5rem;">Show this at the counter. Your food will be
+        ready at your selected time.</p>
+      <button onclick="closeSuccess()" class="btn btn-primary" style="width:100%;">Done</button>
     </div>
   </div>
 
   <!-- HISTORY MODAL -->
   <div class="modal-backdrop" id="historyModal">
-    <div class="modal-content" style="text-align:left;max-width:580px;">
+    <div class="modal-content" style="max-width:540px;max-height:85vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
-        <h3 class="text-gold" style="margin:0;">📋 My Booking History</h3>
-        <button onclick="closeHistory()"
-          style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);line-height:1;">×</button>
+        <h3 style="margin:0;">📋 My Orders</h3>
+        <button class="btn-close" onclick="closeHistoryModal()">×</button>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:1.2rem;">
-        <input type="tel" id="histMobile" class="form-input" placeholder="Enter Mobile Number to search..." />
-        <button onclick="fetchHistory()" class="btn btn-primary" style="white-space:nowrap;">Search</button>
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+        <input type="tel" id="histMobile" class="form-input" style="flex:1;" placeholder="Enter mobile to search…" />
+        <button onclick="fetchHistory()" class="btn btn-primary"
+          style="white-space:nowrap;padding:.8rem 1.2rem;">Search</button>
       </div>
-      <div id="histList" style="max-height:320px;overflow-y:auto;padding-right:4px;">
+      <div id="histList">
         <p class="text-muted" style="text-align:center;padding:1rem;">Enter your mobile number above.</p>
       </div>
     </div>
   </div>
 
-  <!-- JAVASCRIPT -->
+  <!-- SCRIPT -->
   <script>
-    /* CONFIG & STATE */
+    'use strict';
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
-    const MODE = new URLSearchParams(window.location.search).get('mode') || 'food';
 
-    let MENU = [], TABLES = [], cart = {};
+    let MENU = [], cart = {};
+    let menuFilter = 'all';
 
-    /* INIT */
+    /* ── INIT ── */
     window.onload = () => {
       if (sessionStorage.getItem(SESSION_KEY) === "admin")
         document.getElementById("adminLink").style.display = "block";
-
-      // Mode UI
-      if (MODE === 'both') {
-        document.getElementById('heroBadge').textContent = '✨ Table + Food Booking ✨';
-        document.getElementById('heroTitle').innerHTML = 'Reserve Your <em>Table</em>';
-        document.getElementById('heroText').textContent = 'Pick your table and pre-order your meal.';
-        document.getElementById('formTitle').textContent = '🪑 Table + Food Booking';
-        document.getElementById('formSubtitle').textContent = 'Select a table, then fill in your details.';
-        document.getElementById('tablePicker').style.display = 'block';
-      } else {
-        document.getElementById('heroBadge').textContent = '🥡 Food Order ✦';
-        document.getElementById('heroTitle').innerHTML = 'Order <em>Delicious Food</em>';
-        document.getElementById('heroText').textContent = 'Browse our menu and pre-order your favourite dishes.';
-        document.getElementById('formTitle').textContent = '🥡 Food Order Details';
-        document.getElementById('formSubtitle').textContent = "Fill in your details and we'll get your food ready.";
-      }
 
       const savedName = sessionStorage.getItem("sg_name");
       const savedMobile = sessionStorage.getItem("sg_mobile");
@@ -271,296 +556,237 @@
       document.getElementById("dateInput").min = localDate;
       document.getElementById("dateInput").value = localDate;
 
-      Promise.all([
-        fetch(`${SHEET_URL}?action=getMenu`).then(r => r.json()),
-        fetch(`${SHEET_URL}?action=getTables`).then(r => r.json())
-      ]).then(([menuRes, tablesRes]) => {
-        if (menuRes.success && menuRes.menu.length) {
-          MENU = menuRes.menu.map(m => ({
-            ...m, id: String(m.id), icon: m.icon || '🍽️', desc: m.desc || '', price: Number(m.price) || 0
-          }));
-        }
-        if (tablesRes.success && tablesRes.tables.length) {
-          TABLES = tablesRes.tables;
-          if (MODE === 'both') renderTablePicker();
-        }
-        renderMenu();
-      }).catch(() => { showToast("Warning", "Could not load data.", "warning"); renderMenu(); });
+      fetch(`${SHEET_URL}?action=getMenu`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && res.menu.length) {
+            MENU = res.menu.map(m => ({
+              ...m,
+              id: String(m.id),
+              icon: m.icon || '🍽️',
+              desc: m.desc || '',
+              price: Number(m.price) || 0
+            }));
+          }
+          renderMenu();
+        })
+        .catch(() => { showToast("Warning", "Could not load menu.", "warning"); renderMenu(); });
     };
 
-    /* ── Table Picker ── */
-    function renderTablePicker() {
-      const grid = document.getElementById('tablePickerGrid');
-      if (!TABLES.length) { grid.innerHTML = '<p class="text-muted" style="font-size:0.8rem;">No tables available.</p>'; return; }
-      grid.innerHTML = TABLES.map(t => `
-        <div id="tcard_${t.id}" onclick="selectTable(${t.id},'${String(t.name).replace(/'/g, "\\'")}')"
-          style="cursor:pointer;border:2px solid var(--glass-border);border-radius:var(--radius-md);
-                 padding:0.6rem 0.4rem;text-align:center;transition:0.2s;background:rgba(255,255,255,0.85);">
-          <div style="font-size:1.5rem;">${t.icon || '🪑'}</div>
-          <div style="font-weight:700;font-size:0.8rem;margin-top:2px;">${t.name}</div>
-          <div style="font-size:0.68rem;color:var(--text-muted);">≤ ${t.cap} guests</div>
-        </div>`).join('');
+    /* ── RENDER MENU ── */
+    function setFilter(cat, el) {
+      menuFilter = cat;
+      document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      renderMenu();
     }
-
-    function selectTable(id, name) {
-      document.querySelectorAll('[id^="tcard_"]').forEach(c => {
-        c.style.borderColor = 'var(--glass-border)';
-        c.style.background = 'rgba(255,255,255,0.85)';
-        c.style.boxShadow = '';
-      });
-      const card = document.getElementById('tcard_' + id);
-      if (card) { card.style.borderColor = 'var(--gold)'; card.style.background = 'rgba(200,134,10,0.07)'; card.style.boxShadow = 'var(--shadow-gold)'; }
-      document.getElementById('selectedTableId').value = id;
-      document.getElementById('selectedTableName').value = name;
-    }
-
-    /* ------ RENDER FUNCTIONS ------ */
-
-    let menuFilter = "all";
 
     function renderMenu() {
-      const container = document.getElementById("guestMenusContainer");
-      if (!container) return;
+      const q = document.getElementById("menuSearch").value.toLowerCase();
+      const grid = document.getElementById("menuGrid");
 
-      const catTabs = [
-        { key: "all", label: "✨ All" },
-        { key: "starters", label: "🥟 Starters" },
-        { key: "mains", label: "🍛 Mains" },
-        { key: "breads", label: "🫓 Breads" },
-        { key: "desserts", label: "🍮 Desserts" },
-        { key: "drinks", label: "☕ Drinks" }
-      ];
+      let items = MENU;
+      if (menuFilter !== 'all') items = items.filter(m => m.cat === menuFilter);
+      if (q) items = items.filter(m => m.name.toLowerCase().includes(q) || (m.desc || '').toLowerCase().includes(q));
 
-      const items = menuFilter === "all" ? MENU : MENU.filter(m => m.cat === menuFilter);
+      if (!items.length) {
+        grid.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;grid-column:1/-1;">No items found.</p>';
+        return;
+      }
 
-      const tabsHtml = catTabs.map(c => `
-        <button onclick="setMenuFilter('${c.key}')"
-          style="padding:5px 12px;border-radius:50px;border:1px solid var(--glass-border);
-                 background:${menuFilter === c.key ? 'var(--gold-gradient)' : 'rgba(255,255,255,0.8)'};
-                 color:${menuFilter === c.key ? 'white' : 'var(--text-muted)'};
-                 font-size:0.75rem;font-weight:700;cursor:pointer;transition:var(--trans-fast);white-space:nowrap;
-                 box-shadow:${menuFilter === c.key ? 'var(--shadow-gold)' : 'var(--shadow-sm)'};">
-          ${c.label}
-        </button>`).join("");
-
-      const cardsHtml = items.map(m => {
+      grid.innerHTML = items.map(m => {
         const qty = cart[m.id] || 0;
-        return `
-          <div style="background:var(--bg-glass-strong);border-radius:var(--radius-lg);padding:1rem;
-                      border:1px solid ${qty > 0 ? 'var(--gold)' : 'var(--glass-border)'};
-                      transition:var(--trans-base);display:flex;flex-direction:column;
-                      box-shadow:${qty > 0 ? 'var(--shadow-gold)' : 'var(--shadow-sm)'}; backdrop-filter:blur(12px);">
-            <div style="font-size:2rem;margin-bottom:0.35rem;">${m.icon}</div>
-            <div style="display:flex;justify-content:space-between;align-items:start;gap:4px;margin-bottom:0.2rem;">
-              <h4 style="font-size:0.8rem;margin:0;font-weight:700;line-height:1.3;">${m.name}</h4>
-              <span style="font-weight:800;color:var(--gold-dark);font-size:0.78rem;white-space:nowrap;">₹${m.price}</span>
-            </div>
-            <p style="font-size:0.7rem;color:var(--text-muted);flex-grow:1;margin-bottom:0.45rem;line-height:1.4;">${m.desc}</p>
-            <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(0,0,0,0.05);padding-top:0.45rem;">
-              <span style="font-size:0.62rem;font-weight:700;padding:2px 5px;border-radius:4px;
-                ${m.veg ? 'color:#166534;background:#DCFCE7;' : 'color:#991B1B;background:#FEE2E2;'}">
-                ${m.veg ? '🟢 VEG' : '🔴 NON'}
-              </span>
-              <div style="display:flex;align-items:center;gap:4px;">
-                <button class="btn-qty" style="width:22px;height:22px;font-size:0.85rem;" onclick="updateCart('${m.id}', -1)">−</button>
-                <span style="min-width:16px;text-align:center;font-size:0.82rem;font-weight:700;${qty > 0 ? 'color:var(--gold-dark);' : ''}">${qty}</span>
-                <button class="btn-qty" style="width:22px;height:22px;font-size:0.85rem;" onclick="updateCart('${m.id}', 1)">+</button>
-              </div>
-            </div>
-          </div>`;
-      }).join("");
-
-      container.innerHTML = `
-        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.7rem;">${tabsHtml}</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;">${cardsHtml}</div>
-      `;
+        const inCart = qty > 0;
+        return `<div class="menu-card ${inCart ? 'in-cart' : ''}" id="mc_${m.id}">
+          <span class="mc-badge ${m.veg == 'true' || m.veg === true ? 'veg' : 'non'}">${m.veg == 'true' || m.veg === true ? '🟢' : '🔴'}</span>
+          <div class="mc-icon">${m.icon}</div>
+          <div class="mc-name">${m.name}</div>
+          ${m.desc ? `<div class="mc-desc">${m.desc}</div>` : ''}
+          <div class="mc-price">₹${m.price}</div>
+          <div class="qty-ctrl">
+            <button onclick="changeQty('${m.id}',-1)">−</button>
+            <span id="qty_${m.id}">${qty}</span>
+            <button onclick="changeQty('${m.id}',+1)">+</button>
+          </div>
+        </div>`;
+      }).join('');
     }
 
-    function setMenuFilter(cat) {
-      menuFilter = cat;
-      renderMenu();
-    }
-
-
-
-
-    /* ------ CART LOGIC ------ */
-    function updateCart(id, delta) {
-      const current = cart[id] || 0;
-      const next = current + delta;
-      if (next <= 0) delete cart[id];
-      else cart[id] = next;
-
-      renderMenu();
+    /* ── CART ── */
+    function changeQty(id, delta) {
+      const qty = Math.max(0, (cart[id] || 0) + delta);
+      if (qty === 0) delete cart[id]; else cart[id] = qty;
       updateCartUI();
+      renderMenu();
     }
 
     function updateCartUI() {
-      const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-      document.getElementById("cartCountBadge").textContent = totalItems;
+      const items = Object.keys(cart);
+      const total = items.reduce((s, id) => s + (MENU.find(m => m.id === id)?.price || 0) * cart[id], 0);
+      const gst = Math.round(total * 0.18);
+      const grand = total + gst;
+      const count = items.reduce((s, id) => s + cart[id], 0);
 
-      const list = document.getElementById("cartItemsList");
-      let totalValue = 0;
+      // Badge
+      const badge = document.getElementById("cartBadge");
+      badge.textContent = count;
+      badge.style.display = count ? 'block' : 'none';
 
-      const itemsHtml = Object.keys(cart).map(id => {
-        const item = MENU.find(x => x.id === id);
-        totalValue += item.price * cart[id];
-        return `
-          <div class="cart-item-row">
-            <div class="cart-item-info">
-                <h5>${item.name}</h5>
-                <p>₹${item.price} × ${cart[id]}</p>
+      // Drawer body
+      const body = document.getElementById("cartBody");
+      if (!items.length) {
+        body.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;">Your cart is empty.</p>';
+        document.getElementById("cartTotals").style.display = 'none';
+      } else {
+        body.innerHTML = items.map(id => {
+          const item = MENU.find(m => m.id === id);
+          if (!item) return '';
+          return `<div class="cart-item-row">
+            <div>
+              <div style="font-weight:700;font-size:.84rem;">${item.icon} ${item.name}</div>
+              <div style="font-size:.73rem;color:var(--ink-60);">₹${item.price} × ${cart[id]}</div>
             </div>
-            <div style="font-weight:700;">₹${item.price * cart[id]}</div>
-          </div>
-        `;
-      }).join("");
+            <div style="display:flex;align-items:center;gap:.4rem;">
+              <button onclick="changeQty('${id}',-1)" style="background:var(--smoke);border:1px solid var(--border);border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:800;">−</button>
+              <span style="font-weight:700;min-width:18px;text-align:center;">${cart[id]}</span>
+              <button onclick="changeQty('${id}',+1)" style="background:var(--smoke);border:1px solid var(--border);border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:800;">+</button>
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById("cartTotals").style.display = 'block';
+        document.getElementById("cartSubtotal").textContent = '₹' + total;
+        document.getElementById("cartGST").textContent = '₹' + gst;
+        document.getElementById("cartTotal").textContent = '₹' + grand;
+      }
 
-      list.innerHTML = itemsHtml || '<p class="text-muted" style="text-align:center; padding:2rem;">Your cart is empty.</p>';
-      const gst = Math.round(totalValue * 0.18);
-      const grandTotal = totalValue + gst;
-      document.getElementById("cartSubtotalDisplay").textContent = "₹" + totalValue;
-      document.getElementById("cartGSTDisplay").textContent = "₹" + gst;
-      document.getElementById("cartTotalDisplay").textContent = "₹" + grandTotal;
+      // Mini cart in form
+      const mini = document.getElementById("miniCartSummary");
+      if (items.length) {
+        mini.style.display = 'block';
+        document.getElementById("miniCartItems").textContent =
+          items.map(id => { const m = MENU.find(x => x.id === id); return `${m?.name} ×${cart[id]}`; }).join(', ');
+        document.getElementById("miniCartTotal").textContent = '₹' + grand;
+      } else {
+        mini.style.display = 'none';
+      }
     }
 
     function toggleCart() {
       document.getElementById("cartDrawer").classList.toggle("show");
     }
 
-    /* ------ BOOKING LOGIC ------ */
+    /* ── SUBMIT BOOKING ── */
     function submitBooking() {
-      const cartTotalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-      if (cartTotalItems === 0) return showToast("Cart Empty", "Please add at least one item.", "error");
+      const count = Object.values(cart).reduce((a, b) => a + b, 0);
+      if (!count) return showToast("Cart Empty", "Add at least one item.", "error");
 
       const name = document.getElementById("guestName").value.trim();
       const phone = document.getElementById("guestPhone").value.trim();
       const date = document.getElementById("dateInput").value;
       const time = document.getElementById("timeInput").value;
-
-      if (!name || !phone || !date || !time) return showToast("Missing Info", "Fill all required fields (*)", "error");
-
-      // Table validation for 'both' mode
-      const tableId = document.getElementById("selectedTableId")?.value;
-      const tableName = document.getElementById("selectedTableName")?.value;
-      if (MODE === 'both' && !tableId) return showToast("Select Table", "Please select a table first.", "error");
+      if (!name || !phone || !date || !time) return showToast("Missing Info", "Fill all required fields.", "error");
 
       const btn = document.getElementById("submitBtn");
-      btn.disabled = true; btn.textContent = "Confirming...";
+      btn.disabled = true; btn.textContent = "Confirming…";
 
       const menuSummary = Object.keys(cart).map(id => {
-        const item = MENU.find(x => x.id === id);
-        return `${item.name} (x${cart[id]})`;
+        const m = MENU.find(x => x.id === id); return `${m?.name} ×${cart[id]}`;
       }).join(", ");
-
-      const subtotal = Object.keys(cart).reduce((sum, id) => sum + (MENU.find(x => x.id === id)?.price || 0) * cart[id], 0);
+      const subtotal = Object.keys(cart).reduce((s, id) => {
+        return s + (MENU.find(x => x.id === id)?.price || 0) * cart[id];
+      }, 0);
       const gst = Math.round(subtotal * 0.18);
-      const grandTotal = subtotal + gst;
+      const total = subtotal + gst;
 
       const payload = {
         ref: "IOCL-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-        emp_no: phone,
-        name, phone,
+        emp_no: phone, name, phone,
         email: document.getElementById("email").value,
         date, time,
         guests: document.getElementById("guests").value,
-        table: MODE === 'both' ? tableName : "N/A (Food Only)",
-        table_id: MODE === 'both' ? tableId : 0,
+        table: "N/A (Food Only)",
+        table_id: 0,
         special: document.getElementById("special").value,
-        type: MODE === 'both' ? "BOTH" : "FOOD",
+        type: "FOOD",
         menu: menuSummary || "No items",
-        subtotal, gst, total: grandTotal
+        subtotal, gst, total
       };
 
-      fetch(SHEET_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
+      fetch(SHEET_URL, { method: "POST", body: JSON.stringify(payload) })
         .then(r => r.json())
         .then(d => {
-          btn.disabled = false;
-          btn.textContent = "✔ Confirm Booking";
+          btn.disabled = false; btn.textContent = "✔ Confirm Order";
           if (d.success) {
             document.getElementById("modalRef").textContent = payload.ref;
             document.getElementById("successModal").classList.add("show");
             cart = {};
             updateCartUI();
             renderMenu();
-          } else showToast("Error", d.error, "error");
+          } else {
+            showToast("Error", d.error || "Failed to submit.", "error");
+          }
         })
-        .catch(() => {
-          btn.disabled = false;
-          btn.textContent = "✔ Confirm Booking";
-          showToast("Error", "Network issue.", "error");
-        });
+        .catch(() => { btn.disabled = false; btn.textContent = "✔ Confirm Order"; showToast("Error", "Network error.", "error"); });
     }
 
-    /* ------ UI HELPERS ------ */
-    function showToast(title, msg, type = "success") {
-      const c = document.getElementById("toastContainer");
-      const t = document.createElement("div");
-      t.className = `toast ${type}`;
-      t.innerHTML = `<div class="toast-content"><h4>${title}</h4><p>${msg}</p></div>`;
-      c.appendChild(t);
-      setTimeout(() => t.classList.add("show"), 10);
-      setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 400); }, 3000);
-    }
-    function closeSuccess() { window.location.href = "choice.html"; }
-    function logout() {
-      sessionStorage.removeItem("sg_session");
-      sessionStorage.removeItem("sg_name");
-      sessionStorage.removeItem("sg_mobile");
-      window.location.href = "login.html";
-    }
-    function openHistory() {
-      const mobile = sessionStorage.getItem("sg_mobile") || "";
-      const input = document.getElementById("histMobile");
-      if (input) input.value = mobile;
+    function closeSuccess() { document.getElementById("successModal").classList.remove("show"); }
+
+    /* ── HISTORY ── */
+    function openHistoryModal() {
       document.getElementById("historyModal").classList.add("show");
-      if (mobile) fetchHistory();
+      const mob = sessionStorage.getItem("sg_mobile");
+      if (mob) { document.getElementById("histMobile").value = mob; fetchHistory(); }
     }
-    function closeHistory() { document.getElementById("historyModal").classList.remove("show"); }
-
+    function closeHistoryModal() { document.getElementById("historyModal").classList.remove("show"); }
 
     function fetchHistory() {
-      const mobile = document.getElementById("histMobile").value.trim();
-      if (!mobile) return showToast("Required", "Please enter your Mobile Number", "warning");
-
+      const mob = document.getElementById("histMobile").value.trim();
+      if (!mob) return;
       const list = document.getElementById("histList");
-      list.innerHTML = `<p style="text-align:center;padding:1rem;">Searching...</p>`;
-
-      fetch(`${SHEET_URL}?action=history&phone=${encodeURIComponent(mobile)}`)
+      list.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;">Searching…</p>';
+      fetch(`${SHEET_URL}?action=history&phone=${encodeURIComponent(mob)}`)
         .then(r => r.json())
         .then(res => {
           if (!res.success || !res.bookings.length) {
-            list.innerHTML = `<p style="text-align:center;padding:1rem;color:var(--danger);">No bookings found.</p>`;
+            list.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;">No orders found.</p>';
             return;
           }
-
-          list.innerHTML = res.bookings.map(b => {
-            const type = (b["Booking Type"] || "BOTH").toUpperCase();
-            const typeLabel = type === "TABLE" ? "🪑 Table Only" : type === "FOOD" ? "🥡 Food Only" : "✨ Combined";
-            const isConfirmed = b["Status"] === "Confirmed";
-
-            return `
-                    <div class="history-card" style="margin-bottom:1rem; padding:1.2rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:rgba(255,255,255,0.85); backdrop-filter:blur(12px); box-shadow:var(--shadow-sm);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
-                            <span style="font-size:0.75rem; font-weight:800; color:var(--gold-dark);">${b["Booking Ref"]}</span>
-                            <span class="h-status ${b["Status"] === 'Cancelled' ? 'st-cancelled' : 'st-confirmed'}">${b["Status"]}</span>
-                        </div>
-                        <div style="font-weight:700; margin-bottom:0.3rem;">${b["Date"]} | ${b["Time"]}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">${typeLabel}</div>
-                        ${b["Guest Orders"] ? `<div style="font-size:0.75rem; padding:8px; background:#f9fafb; border-radius:8px;">${b["Guest Orders"]}</div>` : ''}
-                    </div>
-                    `;
-          }).join("");
+          list.innerHTML = res.bookings.reverse().map(b => {
+            const st = (b['Status'] || 'Confirmed').toLowerCase();
+            const total = Number(b['Total'] || 0) || (Number(b['Subtotal'] || 0) + Number(b['GST'] || 0));
+            return `<div class="hist-item">
+              <div>
+                <div class="hist-ref">${b['Booking Ref']}</div>
+                <div class="hist-name">${b['Customer Name']}</div>
+                <div class="hist-date">📅 ${b['Date']}  🕐 ${b['Time']}</div>
+                <div class="hist-orders">${b['Guest Orders'] || 'No items'}</div>
+              </div>
+              <div style="text-align:right;min-width:80px;">
+                <span class="h-status ${st === 'confirmed' ? 'st-confirmed' : st === 'cancelled' ? 'st-cancelled' : 'st-completed'}">${b['Status']}</span>
+                ${total ? `<div class="hist-total" style="margin-top:.4rem;">₹${total}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('');
         })
-        .catch(() => {
-          list.innerHTML = `<p style="text-align:center;padding:1rem;color:var(--danger);">Error fetching history.</p>`;
-        });
+        .catch(() => { list.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;">Error loading history.</p>'; });
     }
+
+    /* ── TOAST ── */
+    function showToast(title, msg, type = 'success') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.innerHTML = `<h4>${title}</h4><p>${msg}</p>`;
+      c.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 10);
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.modal-backdrop').forEach(b => {
+      b.addEventListener('click', e => { if (e.target === b) b.classList.remove('show'); });
+    });
   </script>
 </body>
-
 
 </html>

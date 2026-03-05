@@ -7,191 +7,278 @@
     <title>IOCL Officer Club Restaurant — Full Menu</title>
     <link rel="stylesheet" href="style.css" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
         rel="stylesheet" />
     <style>
-        .tab-container {
-            display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 2.5rem;
+        .menu-page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.2rem;
         }
 
-        .tab {
-            padding: 8px 18px;
-            border-radius: 50px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            background: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: var(--trans-base);
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        .tab:hover {
-            background: #ffffff;
-            color: var(--text-main);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .tab.active {
-            background: var(--gold-gradient);
-            color: white;
-            border-color: transparent;
-            box-shadow: var(--shadow-gold), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-
-        .menu-item {
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            border: 1px solid var(--glass-border);
-            transition: var(--trans-base);
+        .menu-item-card {
+            background: var(--surface-hi);
+            border: 1.5px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 1.3rem 1rem;
             display: flex;
             flex-direction: column;
-            height: 100%;
-            box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 1);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            align-items: center;
+            text-align: center;
+            box-shadow: var(--s-xs);
+            transition: var(--t-base);
         }
 
-        .menu-item:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--gold-light);
-            background: #ffffff;
+        .menu-item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--s-md);
+            border-color: var(--amber-light);
+        }
+
+        .mi-icon {
+            font-size: 2.4rem;
+            margin-bottom: .6rem;
+        }
+
+        .mi-name {
+            font-size: .95rem;
+            font-weight: 700;
+            margin-bottom: .25rem;
+        }
+
+        .mi-desc {
+            font-size: .76rem;
+            color: var(--ink-60);
+            line-height: 1.4;
+            margin-bottom: .5rem;
+            flex: 1;
+        }
+
+        .mi-price {
+            font-size: .9rem;
+            font-weight: 800;
+            color: var(--amber-dark);
+        }
+
+        .mi-badge {
+            display: inline-block;
+            font-size: .62rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+            margin-bottom: .4rem;
+        }
+
+        .veg {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .nveg {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+
+        .fpill {
+            padding: .38rem 1.1rem;
+            border-radius: 50px;
+            font-size: .76rem;
+            font-weight: 700;
+            border: 1.5px solid var(--border);
+            cursor: pointer;
+            transition: var(--t-fast);
+            background: rgba(255, 255, 255, .8);
+            color: var(--ink-60);
+        }
+
+        .fpill.active {
+            background: var(--amber-grad);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: var(--s-amber);
+        }
+
+        .search-wrap {
+            position: relative;
+            max-width: 460px;
+            margin-bottom: 1.2rem;
+        }
+
+        .search-wrap input {
+            width: 100%;
+            padding: .7rem 1rem .7rem 2.7rem;
+            border: 1.5px solid var(--border);
+            border-radius: 50px;
+            font-family: inherit;
+            font-size: .9rem;
+            transition: var(--t-fast);
+            background: rgba(255, 255, 255, .85);
+        }
+
+        .search-wrap input:focus {
+            outline: none;
+            border-color: var(--amber);
+            box-shadow: 0 0 0 4px var(--amber-soft);
+            background: #fff;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: .9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--ink-60);
+        }
+
+        .cat-section {
+            margin-bottom: 2rem;
+        }
+
+        .cat-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .cat-title::after {
+            content: '';
+            flex: 1;
+            height: 1.5px;
+            background: var(--border);
         }
     </style>
 </head>
 
 <body>
 
-    <!-- SESSION GUARD -->
-    <script>
-        var SESSION_KEY = "sg_session";
-        var s = sessionStorage.getItem(SESSION_KEY);
-        if (s !== "user" && s !== "admin") { window.location.replace("login.html"); }
-    </script>
-
     <nav>
-        <a href="index.html" class="nav-brand">IOCL Officer Club <span>Fine Cuisine</span></a>
+        <a href="index.html" class="nav-brand">IOCL Officer Club <span>Fine Dining</span></a>
         <ul class="nav-links">
-            <li><a href="index.html" class="nav-link">Book Table</a></li>
+            <li><a href="index.html" class="nav-link">Order Food</a></li>
             <li><a href="menu.html" class="nav-link active">Menu</a></li>
-            <li id="adminLink" style="display:none"><a href="admin.html" class="nav-link text-gold">Admin</a></li>
-            <li><button onclick="logout()" class="btn btn-secondary"
-                    style="padding:0.4rem 1rem;font-size:0.8rem;">Logout</button></li>
+            <li id="adminLink" style="display:none;"><a href="admin.html" class="nav-link">Admin</a></li>
         </ul>
     </nav>
 
-    <header class="hero" style="padding: 2.5rem 1rem;">
-        <span class="badge">✦ Our Culinary Offerings ✦</span>
-        <h1 style="font-size: 2.2rem;">The <em>Full Menu</em></h1>
-        <p style="max-width: 500px; font-size: 0.9rem;">Crafted with authentic spices, premium ingredients, and
-            generations of culinary wisdom.</p>
-    </header>
+    <div class="hero" style="padding:2.5rem 1rem 1.5rem;">
+        <span class="badge">🍽️ Complete Menu</span>
+        <h1 style="font-size:clamp(1.8rem,4vw,3rem);">Discover Our <em>Dishes</em></h1>
+        <p style="font-size:.93rem;">Explore everything on our menu — from starters to desserts.</p>
+    </div>
 
-    <div class="container section">
+    <div class="container section" style="padding-top:0;">
 
-        <!-- TABS -->
-        <div class="tab-container" id="tabs">
-            <button class="tab active" data-cat="all">✨ All Specialities</button>
-            <button class="tab" data-cat="starters">🥗 Starters</button>
-            <button class="tab" data-cat="mains">🍛 Mains</button>
-            <button class="tab" data-cat="breads">🫓 Breads &amp; Rice</button>
-            <button class="tab" data-cat="desserts">🍮 Desserts</button>
-            <button class="tab" data-cat="drinks">🥤 Drinks</button>
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="menuSearch" placeholder="Search any dish…" oninput="renderMenuPage()" />
         </div>
 
-        <!-- GRID -->
-        <div class="menu-grid" id="menuGrid"
-            style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1.5rem;">
-            <!-- JS Rendered -->
+        <div class="filter-pills" id="filterPills">
+            <button class="fpill active" onclick="setCat('all',this)">✨ All</button>
+            <button class="fpill" onclick="setCat('starters',this)">🥟 Starters</button>
+            <button class="fpill" onclick="setCat('mains',this)">🍛 Mains</button>
+            <button class="fpill" onclick="setCat('breads',this)">🫓 Breads</button>
+            <button class="fpill" onclick="setCat('desserts',this)">🍮 Desserts</button>
+            <button class="fpill" onclick="setCat('drinks',this)">☕ Drinks</button>
         </div>
 
-        <div style="text-align:center; margin-top:4rem">
-            <a href="index.html" class="btn btn-primary">
-                📅 Book a Table Now
-            </a>
+        <div id="menuOutput">
+            <p class="text-muted" style="text-align:center;padding:3rem;">Loading menu…</p>
         </div>
 
     </div>
 
-    <footer
-        style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.85rem;border-top:1px solid rgba(0,0,0,0.05);margin-top:2rem;">
-        <p>📍 123 Fine Dining Lane, Your City &nbsp;|&nbsp; 📞 +91 98765 43210</p>
-        <p style="margin-top:0.5rem;">All prices include GST.</p>
-    </footer>
-
     <script>
+        var SESSION_KEY = "sg_session";
+        if (!sessionStorage.getItem(SESSION_KEY)) window.location.replace("login.html");
+
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
-        let MENU = [];
-        let currentCat = "all";
+        let MENU = [], activeCat = 'all';
+
+        const CAT_META = {
+            all: { label: 'All Dishes', icon: '✨' },
+            starters: { label: 'Starters', icon: '🥟' },
+            mains: { label: 'Main Course', icon: '🍛' },
+            breads: { label: 'Breads', icon: '🫓' },
+            desserts: { label: 'Desserts', icon: '🍮' },
+            drinks: { label: 'Beverages', icon: '☕' },
+        };
+
+        if (sessionStorage.getItem(SESSION_KEY) === "admin")
+            document.getElementById("adminLink").style.display = "block";
 
         window.onload = () => {
-            if (sessionStorage.getItem(SESSION_KEY) === "admin") {
-                document.getElementById("adminLink").style.display = "block";
-            }
-            // Show loading state
-            document.getElementById("menuGrid").innerHTML = `<p style="text-align:center;padding:3rem;color:var(--text-muted);">Loading menu from Google Sheets...</p>`;
-            // Fetch menu from Sheets
             fetch(`${SHEET_URL}?action=getMenu`)
                 .then(r => r.json())
                 .then(res => {
                     if (res.success && res.menu.length) {
                         MENU = res.menu.map(m => ({
-                            ...m,
-                            id: String(m.id),
-                            icon: m.icon || '🍽️',
-                            desc: m.desc || '',
-                            price: Number(m.price) || 0
+                            ...m, id: String(m.id), icon: m.icon || '🍽️', desc: m.desc || '', price: Number(m.price) || 0
                         }));
                     }
-                    renderMenu();
+                    renderMenuPage();
                 })
-                .catch(() => renderMenu());
+                .catch(() => { document.getElementById("menuOutput").innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;">Failed to load.</p>'; });
         };
 
-        function logout() { sessionStorage.removeItem(SESSION_KEY); window.location.href = "login.html"; }
-
-        function renderMenu() {
-            const grid = document.getElementById("menuGrid");
-            const items = currentCat === "all" ? MENU : MENU.filter(m => m.cat === currentCat);
-            if (!items.length) {
-                grid.innerHTML = `<p style="text-align:center;padding:3rem;color:var(--text-muted);">No items found.</p>`;
-                return;
-            }
-            grid.innerHTML = items.map(m => `
-                <div class="menu-item">
-                    <div style="font-size:2rem;margin-bottom:0.5rem;">${m.icon || m.emoji || '🍽️'}</div>
-                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.3rem;">
-                        <h4 style="font-size:1rem;margin:0;">${m.name}</h4>
-                        <span style="font-weight:700;color:var(--gold-dark);font-size:0.9rem;">${m.price ? '₹' + m.price : ''}</span>
-                    </div>
-                    <p class="text-muted" style="font-size:0.8rem;flex-grow:1;margin-bottom:0.8rem;">${m.desc}</p>
-                    <div style="border-top:1px solid rgba(0,0,0,0.05);padding-top:0.6rem;font-size:0.7rem;font-weight:700;">
-                        ${m.veg ?
-                    '<span style="color:#166534;background:#DCFCE7;padding:2px 6px;border-radius:4px;">🟢 VEG</span>' :
-                    '<span style="color:#991B1B;background:#FEE2E2;padding:2px 6px;border-radius:4px;">🔴 NON-VEG</span>'}
-                    </div>
-                </div>
-            `).join("");
+        function setCat(cat, el) {
+            activeCat = cat;
+            document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            renderMenuPage();
         }
 
-        // Tab clicks
-        document.getElementById("tabs").addEventListener("click", function (e) {
-            if (e.target.classList.contains("tab")) {
-                document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-                e.target.classList.add("active");
-                currentCat = e.target.dataset.cat;
-                renderMenu();
+        function renderMenuPage() {
+            const q = document.getElementById('menuSearch').value.toLowerCase();
+            const out = document.getElementById('menuOutput');
+            let items = MENU;
+            if (activeCat !== 'all') items = items.filter(m => m.cat === activeCat);
+            if (q) items = items.filter(m => m.name.toLowerCase().includes(q) || (m.desc || '').toLowerCase().includes(q));
+
+            if (!items.length) {
+                out.innerHTML = '<p class="text-muted" style="text-align:center;padding:3rem;">No dishes found.</p>';
+                return;
             }
-        });
+
+            if (activeCat !== 'all' || q) {
+                // Flat grid
+                out.innerHTML = `<div class="menu-page-grid animate-children">${items.map(menuCard).join('')}</div>`;
+            } else {
+                // Grouped by category
+                const cats = ['starters', 'mains', 'breads', 'desserts', 'drinks'];
+                out.innerHTML = cats.map(cat => {
+                    const catItems = items.filter(m => m.cat === cat);
+                    if (!catItems.length) return '';
+                    const meta = CAT_META[cat];
+                    return `<div class="cat-section">
+            <div class="cat-title">${meta.icon} ${meta.label}</div>
+            <div class="menu-page-grid animate-children">${catItems.map(menuCard).join('')}</div>
+          </div>`;
+                }).join('');
+            }
+        }
+
+        function menuCard(m) {
+            const isVeg = m.veg === 'true' || m.veg === true;
+            return `<div class="menu-item-card">
+        <span class="mi-badge ${isVeg ? 'veg' : 'nveg'}">${isVeg ? '🟢 VEG' : '🔴 NON-VEG'}</span>
+        <div class="mi-icon">${m.icon}</div>
+        <div class="mi-name">${m.name}</div>
+        <div class="mi-desc">${m.desc || '—'}</div>
+        <div class="mi-price">₹${m.price}</div>
+      </div>`;
+        }
     </script>
 </body>
 
