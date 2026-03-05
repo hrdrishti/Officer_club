@@ -392,6 +392,31 @@
             transform: translateY(0);
             opacity: 1;
         }
+
+        /* ── Print Styles ── */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printReceipt,
+            #printReceipt * {
+                visibility: visible;
+            }
+
+            #printReceipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -400,6 +425,9 @@
         var SESSION_KEY = "sg_session";
         if (sessionStorage.getItem(SESSION_KEY) !== "admin") window.location.replace("login.html");
     </script>
+
+    <!-- Hidden print area -->
+    <div id="printReceipt" style="display:none;background:#fff;color:#000;padding:2rem;"></div>
 
     <div class="toast-container" id="toastContainer"></div>
 
@@ -422,7 +450,13 @@
                 <h2 class="text-amber" style="margin:0 0 .2rem;font-size:1.5rem;">Dashboard</h2>
                 <p class="text-muted" style="margin:0;font-size:.82rem;">Manage bookings &amp; food menu.</p>
             </div>
-            <div id="bookingActions" style="display:flex;gap:.6rem;">
+            <div id="bookingActions" style="display:flex;gap:.6rem;align-items:center;">
+                <label
+                    style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;color:var(--ink-60);cursor:pointer;margin-right:.5rem;">
+                    <input type="checkbox" id="liveUpdateToggle" onchange="toggleLiveUpdates()"
+                        style="accent-color:var(--amber);">
+                    Live Updates
+                </label>
                 <button onclick="exportCSV()" class="btn btn-secondary"
                     style="padding:.55rem 1.1rem;font-size:.82rem;">⬇ Export CSV</button>
                 <button onclick="fetchData()" class="btn btn-primary" style="padding:.55rem 1.1rem;font-size:.82rem;">🔄
@@ -487,7 +521,17 @@
                                 oninput="applyFilters()" style="padding:.65rem .9rem;font-size:.84rem;" />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Date</label>
+                            <label class="form-label" style="display:flex;justify-content:space-between;">
+                                Date
+                                <span style="display:flex;gap:.3rem;">
+                                    <button class="btn btn-secondary"
+                                        style="padding:2px 6px;font-size:.65rem;border-radius:4px;"
+                                        onclick="setQuickDate(0)">Today</button>
+                                    <button class="btn btn-secondary"
+                                        style="padding:2px 6px;font-size:.65rem;border-radius:4px;"
+                                        onclick="setQuickDate(1)">Tmrw</button>
+                                </span>
+                            </label>
                             <input type="date" id="fDate" class="form-input" onchange="applyFilters()"
                                 style="padding:.65rem .9rem;" />
                         </div>
@@ -499,6 +543,15 @@
                                 <option>Confirmed</option>
                                 <option>Cancelled</option>
                                 <option>Completed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Type</label>
+                            <select id="fType" class="form-select" onchange="applyFilters()"
+                                style="padding:.65rem .9rem;font-size:.84rem;">
+                                <option value="">All</option>
+                                <option value="FOOD">Food Only</option>
+                                <option value="BOTH">Food + Table</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -765,7 +818,7 @@
             }
 
             function resetFilters() {
-                ['fSearch', 'fDate', 'fStatus', 'fMinGuests', 'fTime'].forEach(id => document.getElementById(id).value = '');
+                ['fSearch', 'fDate', 'fStatus', 'fType', 'fMinGuests', 'fTime'].forEach(id => document.getElementById(id).value = '');
                 applyFilters();
             }
 
@@ -773,6 +826,7 @@
                 const q = document.getElementById('fSearch').value.toLowerCase();
                 const date = document.getElementById('fDate').value;
                 const st = document.getElementById('fStatus').value.toLowerCase();
+                const typ = document.getElementById('fType').value.toUpperCase();
                 const minG = parseInt(document.getElementById('fMinGuests').value) || 0;
                 const tim = document.getElementById('fTime').value;
 
@@ -783,9 +837,10 @@
                     const dNorm = raw.includes('/') ? raw.split('/').reverse().join('-') : raw.substring(0, 10);
                     const dOk = !date || dNorm === date;
                     const stOk = !st || String(r['Status'] || '').toLowerCase() === st;
+                    const typOk = !typ || String(r['Booking Type'] || '').toUpperCase() === typ;
                     const gOk = !minG || (parseInt(r['Guests']) || 0) >= minG;
                     const tOk = !tim || String(r['Time'] || '').includes(tim);
-                    return sOk && dOk && stOk && gOk && tOk;
+                    return sOk && dOk && stOk && typOk && gOk && tOk;
                 });
 
                 updateStats(filtered);
@@ -794,6 +849,7 @@
 
             function updateStats(data) {
                 const revenue = data.reduce((acc, r) => {
+                    if (r['Status'] === 'Cancelled') return acc;
                     const t = Number(r['Total'] || 0), s = Number(r['Subtotal'] || 0), g = Number(r['GST'] || 0);
                     return acc + (t > 0 ? t : s + g);
                 }, 0);
@@ -802,6 +858,65 @@
                 document.getElementById('statConfirmed').textContent = data.filter(r => r['Status'] === 'Confirmed').length;
                 document.getElementById('statGuests').textContent = data.reduce((a, r) => { const g = parseInt(r['Guests']); return a + (isNaN(g) ? 0 : g); }, 0);
                 document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+            }
+
+            let autoRefreshInterval = null;
+            function toggleLiveUpdates() {
+                const isChecked = document.getElementById('liveUpdateToggle').checked;
+                if (isChecked) {
+                    showToast('Live Updates', 'Auto-refreshing every 30s', 'success');
+                    autoRefreshInterval = setInterval(() => {
+                        fetch(SHEET_URL + '?action=all')
+                            .then(r => r.json())
+                            .then(d => { if (d.success) { allData = d.bookings; applyFilters(); updateCharts(); } })
+                    }, 30000);
+                } else {
+                    clearInterval(autoRefreshInterval);
+                    showToast('Live Updates', 'Auto-refresh disabled');
+                }
+            }
+
+            function setQuickDate(offsetDays) {
+                const d = new Date();
+                d.setDate(d.getDate() + offsetDays);
+                const iso = d.toISOString().split('T')[0];
+                document.getElementById('fDate').value = iso;
+                applyFilters();
+            }
+
+            function printBill(ref) {
+                const row = allData.find(r => r['Booking Ref'] === ref);
+                if (!row) return;
+
+                const receiptHtml = `
+                    <div style="font-family:'Plus Jakarta Sans', sans-serif; max-width:400px; margin:0 auto; padding:20px; border:1px solid #eee;">
+                        <div style="text-align:center; margin-bottom:20px;">
+                            <h2 style="margin:0;">🍽️ IOCL Officer Club</h2>
+                            <p style="margin:5px 0 0; color:#666; font-size:12px;">Restaurant Receipt</p>
+                        </div>
+                        <div style="margin-bottom:20px; font-size:14px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
+                            <strong>Order Ref:</strong> ${row['Booking Ref']}<br>
+                            <strong>Date:</strong> ${row['Date']} ${row['Time']}<br>
+                            <strong>Customer:</strong> ${row['Customer Name']}<br>
+                            <strong>Phone:</strong> ${row['Phone']}<br>
+                            <strong>Type:</strong> ${row['Booking Type'] || 'FOOD'}<br>
+                            <strong>Table:</strong> ${row['Table Name'] || 'N/A'}<br>
+                            <strong>Guests:</strong> ${row['Guests'] || 'N/A'}
+                        </div>
+                        <div style="margin-bottom:20px; font-size:14px;">
+                            <h4 style="margin:0 0 10px;">Order Details</h4>
+                            <div style="white-space:pre-wrap; line-height:1.5;">${row['Guest Orders'] || 'None'}</div>
+                        </div>
+                        <div style="border-top:2px solid #000; padding-top:10px; font-size:16px; font-weight:bold; text-align:right;">
+                            Total: ₹${row['Total'] || (Number(row['Subtotal'] || 0) + Number(row['GST'] || 0)) || '0'}
+                        </div>
+                        <div style="text-align:center; margin-top:30px; font-size:12px; color:#666;">
+                            Thank you for your visit!
+                        </div>
+                    </div>
+                `;
+                document.getElementById('printReceipt').innerHTML = receiptHtml;
+                window.print();
             }
 
             function renderTable(data) {
@@ -820,11 +935,22 @@
                     const savedSub = Number(row['Subtotal'] || 0);
                     const savedGST = Number(row['GST'] || 0);
                     const displayTotal = savedTotal > 0 ? savedTotal : savedSub > 0 ? savedSub + savedGST : null;
+                    const phoneRaw = String(row['Phone'] || '').replace(/'/g, '');
+                    const phoneClean = phoneRaw.replace(/\D/g, '');
+                    const waLink = phoneClean.length >= 10 ? `https://wa.me/91${phoneClean.slice(-10)}` : '#';
+
                     return `<tr class="${st.toLowerCase()}">
           <td><input type="checkbox" class="row-check" value="${row['Booking Ref']}" onchange="updateBulkBar()"></td>
           <td style="font-family:monospace;font-weight:700;font-size:.72rem;white-space:nowrap;">${row['Booking Ref']}</td>
           <td style="white-space:nowrap;">${row['Date']}<br><span style="font-size:.72rem;color:var(--ink-60);">${row['Time']}</span></td>
-          <td><div style="font-weight:700;">${row['Customer Name']}</div><div style="font-size:.72rem;color:var(--ink-60);">${row['Phone']}</div></td>
+          <td>
+            <div style="font-weight:700;">${row['Customer Name']}</div>
+            <div style="font-size:.72rem;margin-top:2px;">
+                <a href="${waLink}" target="_blank" style="color:#25D366;text-decoration:none;display:inline-flex;align-items:center;gap:3px;" title="Chat on WhatsApp">
+                    💬 ${phoneRaw}
+                </a>
+            </div>
+          </td>
           <td style="text-align:center;font-weight:700;">${row['Guests'] || '—'}</td>
           <td><div style="max-width:180px;font-size:.7rem;line-height:1.4;">${row['Guest Orders'] || '<span style="color:#ccc">None</span>'}</div></td>
           <td style="white-space:nowrap;font-weight:800;color:var(--amber-dark);">
@@ -838,8 +964,9 @@
             </select>
           </td>
           <td style="white-space:nowrap;">
-            <button class="action-btn" style="background:var(--smoke);" onclick="openEditModal('${row['Booking Ref']}')">✎</button>
-            <button class="action-btn btn-delete" onclick="deleteBooking('${row['Booking Ref']}')">🗑</button>
+            <button class="action-btn" style="background:#f3f4f6;" onclick="printBill('${row['Booking Ref']}')" title="Print Bill">🖨</button>
+            <button class="action-btn" style="background:var(--smoke);" onclick="openEditModal('${row['Booking Ref']}')" title="Edit">✎</button>
+            <button class="action-btn btn-delete" onclick="deleteBooking('${row['Booking Ref']}')" title="Delete">🗑</button>
           </td>
         </tr>`;
                 }).join('');
