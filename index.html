@@ -316,6 +316,27 @@
       background: #DBEAFE;
       color: #1e40af;
     }
+
+    /* ── Mobile UI Refinements ── */
+    @media(max-width:480px) {
+      .menu-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: .7rem;
+      }
+
+      .nav-brand span {
+        display: none;
+      }
+
+      .success-modal .overlay-box {
+        width: 92%;
+        padding: 2rem 1.5rem;
+      }
+
+      .nav-links {
+        gap: .5rem;
+      }
+    }
   </style>
 </head>
 

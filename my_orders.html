@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IOCL Officer Club — My Orders</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+        rel="stylesheet" />
+    <style>
+        .orders-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .order-card {
+            background: var(--surface-hi);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--s-xs);
+            transition: var(--t-base);
+        }
+
+        .order-card:hover {
+            box-shadow: var(--s-sm);
+            border-color: var(--border-hi);
+            transform: translateY(-2px);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-ref {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .order-date {
+            font-size: .85rem;
+            color: var(--ink-60);
+        }
+
+        .order-status {
+            font-size: .75rem;
+            font-weight: 800;
+            padding: .3rem .8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-confirmed {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+        }
+
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+        }
+
+        .status-completed {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--blue);
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: .9rem;
+        }
+
+        .order-items {
+            grid-column: 1 / -1;
+            background: var(--smoke);
+            padding: 1rem;
+            border-radius: var(--r-sm);
+            margin-top: 1rem;
+            font-size: .85rem;
+            line-height: 1.6;
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border);
+        }
+
+        .order-total {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--amber-dark);
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--ink-60);
+            font-style: italic;
+        }
+
+        @media(max-width:550px) {
+            .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: .6rem;
+            }
+
+            .order-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .order-footer>div {
+                text-align: left !important;
+            }
+
+            .order-details {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-brand span {
+                display: none;
+            }
+        }
+
+        /* ── Print Styles ── */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printReceipt,
+            #printReceipt * {
+                visibility: visible;
+            }
+
+            #printReceipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Hidden print area -->
+    <div id="printReceipt" style="display:none;background:#fff;color:#000;padding:2rem;"></div>
+
+    <nav class="no-print">
+        <a href="choice.html" class="nav-brand">
+            IOCL Officer Club
+            <span>My Orders</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="choice.html" class="nav-link">← Home</a></li>
+            <li><button onclick="logout()" class="btn btn-secondary"
+                    style="padding:.4rem 1rem;font-size:.8rem;">Logout</button></li>
+        </ul>
+    </nav>
+
+    <div class="orders-container no-print" id="ordersList">
+        <div class="loading-state" id="loadingState">
+            Fetching your order history...
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container no-print"></div>
+
+    <script>
+        const SESSION_KEY = "sg_session";
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
+        let allOrders = [];
+
+        window.onload = () => {
+            if (!sessionStorage.getItem(SESSION_KEY)) {
+                window.location.replace("login.html");
+                return;
+            }
+
+            const mobile = sessionStorage.getItem("sg_mobile");
+            if (!mobile) {
+                document.getElementById('ordersList').innerHTML = '<div class="loading-state">Could not identify user. Please log in again.</div>';
+                return;
+            }
+
+            fetchOrders(mobile);
+        };
+
+        function fetchOrders(mobile) {
+            // Use action=history with the phone query parameter to get only this user's bookings.
+            fetch(`${SHEET_URL}?action=history&phone=${encodeURIComponent(mobile)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        allOrders = data.bookings;
+                        renderOrders();
+                    } else {
+                        document.getElementById('ordersList').innerHTML = `<div class="loading-state" style="color:var(--red);">Failed to load orders: ${data.error}</div>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('ordersList').innerHTML = '<div class="loading-state" style="color:var(--red);">Network error. Please try again.</div>';
+                });
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('ordersList');
+
+            if (!allOrders || allOrders.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:4rem 1rem; background:var(--surface-hi); border-radius:var(--r-md); border:1px dashed var(--border);">
+                        <div style="font-size:3rem; margin-bottom:1rem;">🍽️</div>
+                        <h3 style="margin-bottom:.5rem;">No past orders found</h3>
+                        <p class="text-muted" style="margin-bottom:1.5rem;">Looks like you haven't placed any orders yet.</p>
+                        <a href="choice.html" class="btn btn-primary">Start an Order</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <h2 style="margin-bottom:1.5rem; font-size:1.6rem; color:var(--amber-dark);">Your Order History</h2>
+                ${allOrders.map(order => {
+                const statusClass = `status-${(order['Status'] || 'Confirmed').toLowerCase()}`;
+                const items = order['Guest Orders'] || 'None';
+                const itemsHtml = items.split('|').map(i => `<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05);">${i.trim()}</div>`).join('');
+
+                const savedTotal = Number(order['Total'] || 0);
+                const savedSub = Number(order['Subtotal'] || 0);
+                const savedGST = Number(order['GST'] || 0);
+                const displayTotal = savedTotal > 0 ? savedTotal : savedSub > 0 ? savedSub + savedGST : '0';
+
+                return `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <div class="order-ref">#${order['Booking Ref']}</div>
+                                    <div class="order-date">🗓️ ${order['Date']} · ⏰ ${order['Time']}</div>
+                                </div>
+                                <div class="order-status ${statusClass}">${order['Status'] || 'Confirmed'}</div>
+                            </div>
+
+                            <div class="order-details">
+                                <div><strong>Type:</strong> ${order['Booking Type'] === 'FOOD' ? '🥡 Food Only' : '✨ Food + Table'}</div>
+                                ${order['Booking Type'] !== 'FOOD' ? `<div><strong>Table:</strong> ${order['Table Name'] || 'N/A'} (${order['Guests'] || 1} Guests)</div>` : '<div></div>'}
+                            </div>
+
+                            <div class="order-items">
+                                <strong style="display:block;margin-bottom:.5rem;color:var(--ink-60);font-size:.75rem;text-transform:uppercase;letter-spacing:1px;">Order Summary</strong>
+                                ${itemsHtml}
+                            </div>
+
+                            <div class="order-footer">
+                                ${order['Status'] === 'Confirmed' ? `
+                                    <button class="btn btn-secondary" onclick="customerCancel('${order['Booking Ref']}', '${order['Date']}', '${order['Time']}')" style="font-size:.8rem; padding:.5rem 1rem; border-radius:30px; background:rgba(239, 68, 68, 0.1); color:var(--red); border:none;">
+                                        ✖ Cancel Order
+                                    </button>
+                                ` : '<div></div>'}
+                                <div style="display:flex; gap:.8rem; align-items:center;">
+                                    <button class="btn btn-secondary" onclick="printReceipt('${order['Booking Ref']}')" style="font-size:.8rem; padding:.5rem 1rem; border-radius:30px;">
+                                        🖨️ Print Receipt
+                                    </button>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:.75rem; color:var(--ink-60); font-weight:700; text-transform:uppercase;">Total Amount</div>
+                                        <div class="order-total">₹${displayTotal}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }).join('')}
+            `;
+        }
+
+        function customerCancel(ref, dateStr, timeStr) {
+            // 1. Parse Date ("YYYY-MM-DD" or "DD/MM/YYYY")
+            let dString = dateStr;
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                dString = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            // 2. Parse early Time (e.g. "05:00 PM - 06:00 PM" -> "05:00 PM")
+            const startTimeStr = timeStr.split('-')[0].trim();
+            const timeParts = startTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+
+            if (!timeParts) {
+                showToast("Error", "Could not parse booking time.", "error");
+                return;
+            }
+
+            let hours = parseInt(timeParts[1]);
+            const mins = parseInt(timeParts[2]);
+            const ampm = timeParts[3].toUpperCase();
+
+            if (ampm === 'PM' && hours < 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+
+            const bookingDate = new Date(`${dString}T${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`);
+            const now = new Date();
+
+            // 3. Time difference in milliseconds
+            const diffMs = bookingDate.getTime() - now.getTime();
+            const twoHoursMs = 2 * 60 * 60 * 1000;
+
+            if (diffMs <= twoHoursMs) {
+                showToast("Cannot Cancel", "Orders can only be cancelled at least 2 hours before the time slot.", "error");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to cancel order #${ref}?`)) return;
+
+            // 4. Fire API Request
+            showToast("Cancelling...", "Please wait.", "success");
+            fetch(`${SHEET_URL}?action=status&ref=${encodeURIComponent(ref)}&status=Cancelled`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        showToast("Cancelled", "Your order has been cancelled.", "success");
+                        const mobile = sessionStorage.getItem("sg_mobile");
+                        if (mobile) fetchOrders(mobile); // Refresh the list
+                    } else {
+                        showToast("Error", d.error || "Failed to cancel.", "error");
+                    }
+                })
+                .catch(() => showToast("Error", "Network error.", "error"));
+        }
+
+        function showToast(title, text, type = '') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return; // Silent fail if no container
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<strong>${title}</strong><br>${text}`;
+            container.appendChild(t);
+            // Force reflow
+            void t.offsetWidth;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+            setTimeout(() => t.remove(), 4000);
+        }
+
+        function printReceipt(ref) {
+            const order = allOrders.find(r => r['Booking Ref'] === ref);
+            if (!order) return;
+
+            const savedTotal = Number(order['Total'] || 0);
+            const savedSub = Number(order['Subtotal'] || 0);
+            const savedGST = Number(order['GST'] || 0);
+            const displayTotal = savedTotal > 0 ? savedTotal : savedSub > 0 ? savedSub + savedGST : '0';
+
+            const itemsHtml = (order['Guest Orders'] || 'None').split('|').map(i => `<div style="padding:4px 0;border-bottom:1px dotted #ccc;">${i.trim()}</div>`).join('');
+
+            const receiptHtml = `
+                <div style="font-family:'Plus Jakarta Sans', sans-serif; max-width:400px; margin:0 auto; padding:20px; border:1px solid #eee;">
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <h2 style="margin:0;">🍽️ IOCL Officer Club</h2>
+                        <p style="margin:5px 0 0; color:#666; font-size:12px;">Customer Receipt</p>
+                    </div>
+                    
+                    <div style="margin-bottom:20px; font-size:14px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
+                        <strong>Order Ref:</strong> ${order['Booking Ref']}<br>
+                        <strong>Date:</strong> ${order['Date']} ${order['Time']}<br>
+                        <strong>Name:</strong> ${order['Customer Name']}<br>
+                        <strong>Type:</strong> ${order['Booking Type'] === 'FOOD' ? 'Food Only' : 'Food + Table'}<br>
+                        ${order['Booking Type'] !== 'FOOD' ? `<strong>Table:</strong> ${order['Table Name'] || 'N/A'}<br>` : ''}
+                        <strong>Status:</strong> ${order['Status'] || 'Confirmed'}
+                    </div>
+
+                    <div style="margin-bottom:20px; font-size:14px;">
+                        <h4 style="margin:0 0 10px;">Items Ordered</h4>
+                        <div style="line-height:1.5;">${itemsHtml}</div>
+                    </div>
+
+                    <div style="border-top:2px solid #000; padding-top:10px; font-size:16px; font-weight:bold; display:flex; justify-content:space-between;">
+                        <span>Final Total:</span>
+                        <span>₹${displayTotal}</span>
+                    </div>
+
+                    <div style="text-align:center; margin-top:30px; font-size:12px; color:#666;">
+                        Thank you for dining with us!
+                    </div>
+                </div>
+            `;
+            document.getElementById('printReceipt').innerHTML = receiptHtml;
+            window.print();
+        }
+
+        function logout() {
+            ["sg_session", "sg_name", "sg_mobile"].forEach(k => sessionStorage.removeItem(k));
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+
+</html>

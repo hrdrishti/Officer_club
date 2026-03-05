@@ -1000,7 +1000,22 @@ textarea.form-input {
 
 /* ══════════════════════════════════════
    RESPONSIVE
-══════════════════════════════════════ */
+   ══════════════════════════════════════ */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
+@media(max-width:768px) {
+  .section {
+    padding: 3rem 0;
+  }
+}
+
 @media(max-width:640px) {
   nav {
     padding: .6rem 1rem
@@ -1008,6 +1023,18 @@ textarea.form-input {
 
   .nav-links {
     gap: .8rem
+  }
+
+  .nav-brand {
+    font-size: 1.1rem;
+  }
+
+  .nav-brand span {
+    display: none;
+  }
+
+  .container {
+    padding: 0 1.25rem;
   }
 
   .card {
@@ -1022,6 +1049,14 @@ textarea.form-input {
   .login-card {
     padding: 2rem 1.5rem;
     border-radius: var(--r-lg)
+  }
+
+  h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero-badge {
+    margin-bottom: 1rem;
   }
 }
 
