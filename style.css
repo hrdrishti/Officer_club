@@ -1024,3 +1024,76 @@ textarea.form-input {
     border-radius: var(--r-lg)
   }
 }
+
+/* ══════════════════════════════════════
+   TABLE PICKER
+══════════════════════════════════════ */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.table-node {
+  background: var(--surface-hi);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 1rem 0.6rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--t-base);
+  box-shadow: var(--s-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.table-node:hover:not(.booked) {
+  transform: translateY(-3px);
+  border-color: var(--amber-light);
+  box-shadow: var(--s-sm);
+}
+
+.table-node.selected {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 2px var(--amber-glow);
+}
+
+.table-node.booked {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.t-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+  line-height: 1;
+}
+
+.t-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+}
+
+.t-cap {
+  font-size: 0.7rem;
+  color: var(--ink-60);
+}
+
+.t-status {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  color: var(--green);
+}
+
+.table-node.booked .t-status {
+  color: var(--red);
+}

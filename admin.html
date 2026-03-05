@@ -434,6 +434,7 @@
         <div class="admin-tabs">
             <button class="admin-tab active" onclick="switchTab('bookings')">📋 Bookings</button>
             <button class="admin-tab" onclick="switchTab('menu')">🍽️ Food Menu</button>
+            <button class="admin-tab" onclick="switchTab('tables')">🪑 Tables</button>
         </div>
 
         <!-- ═════ TAB: BOOKINGS ═════ -->
@@ -595,6 +596,17 @@
             </div>
         </div>
 
+        <!-- ═════ TAB: TABLES ═════ -->
+        <div class="tab-panel" id="panel-tables">
+            <div class="add-btn-row">
+                <button class="btn btn-primary" onclick="openTableModal()"
+                    style="font-size:.84rem;padding:.6rem 1.3rem;">+ Add Table</button>
+            </div>
+            <div class="manage-grid" id="tablesManageGrid">
+                <p class="text-muted" style="padding:2rem;">Click the Tables tab to load…</p>
+            </div>
+        </div>
+
     </div><!-- /container -->
 
     <!-- ══ EDIT BOOKING MODAL ══ -->
@@ -688,94 +700,127 @@
                 </div>
             </form>
         </div>
-    </div>
+        <!-- ══ TABLE MODAL ══ -->
+        <div id="tableModal" class="overlay">
+            <div class="overlay-box">
+                <h3 class="text-amber" style="margin-bottom:1.2rem;" id="tableModalTitle">Add Table</h3>
+                <form id="tableForm" onsubmit="saveTable(event)">
+                    <input type="hidden" id="tabEditId" />
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group"><label class="form-label">Table ID *</label><input type="text"
+                                id="tabId" class="form-input" required placeholder="e.g. T1" /></div>
+                        <div class="form-group"><label class="form-label">Name *</label><input type="text" id="tabName"
+                                class="form-input" required placeholder="e.g. Table 1" /></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                        <div class="form-group"><label class="form-label">Capacity *</label><input type="number"
+                                id="tabCap" class="form-input" min="1" required /></div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="tabStatus" class="form-select">
+                                <option value="Available">Available</option>
+                                <option value="Booked">Booked</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Icon (emoji)</label>
+                            <input type="text" id="tabIcon" class="form-input" placeholder="🪑" />
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeTableModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="tableSaveBtn">Save Table</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <script>
-        'use strict';
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
+        <script>
+            'use strict';
+            const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
 
-        let allData = [], menuData = [], menuCat = 'all', charts = {}, menuLoaded = false;
+            let allData = [], menuData = [], menuCat = 'all', charts = {}, menuLoaded = false;
 
-        window.onload = () => fetchData();
+            window.onload = () => fetchData();
 
-        /* ── TABS ── */
-        function switchTab(name) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
-            document.getElementById('panel-' + name).classList.add('active');
-            const idx = { bookings: 0, menu: 1 }[name];
-            document.querySelectorAll('.admin-tab')[idx].classList.add('active');
-            document.getElementById('bookingActions').style.display = name === 'bookings' ? '' : 'none';
-            if (name === 'menu' && !menuLoaded) loadMenuManage();
-        }
-
-        /* ── BOOKINGS ── */
-        function fetchData() {
-            document.getElementById('tableBody').innerHTML =
-                '<tr><td colspan="9" style="text-align:center;padding:2rem;">Loading…</td></tr>';
-            fetch(SHEET_URL + '?action=all')
-                .then(r => r.json())
-                .then(d => { if (!d.success) throw new Error(d.error); allData = d.bookings; applyFilters(); updateCharts(); })
-                .catch(err => showToast('Error', err.message || 'Failed', 'error'));
-        }
-
-        function resetFilters() {
-            ['fSearch', 'fDate', 'fStatus', 'fMinGuests', 'fTime'].forEach(id => document.getElementById(id).value = '');
-            applyFilters();
-        }
-
-        function applyFilters() {
-            const q = document.getElementById('fSearch').value.toLowerCase();
-            const date = document.getElementById('fDate').value;
-            const st = document.getElementById('fStatus').value.toLowerCase();
-            const minG = parseInt(document.getElementById('fMinGuests').value) || 0;
-            const tim = document.getElementById('fTime').value;
-
-            const filtered = allData.filter(r => {
-                const sOk = !q || [r['Customer Name'], r['Booking Ref'], r['Phone'], r['Email']]
-                    .some(v => String(v || '').toLowerCase().includes(q));
-                const raw = String(r['Date'] || '');
-                const dNorm = raw.includes('/') ? raw.split('/').reverse().join('-') : raw.substring(0, 10);
-                const dOk = !date || dNorm === date;
-                const stOk = !st || String(r['Status'] || '').toLowerCase() === st;
-                const gOk = !minG || (parseInt(r['Guests']) || 0) >= minG;
-                const tOk = !tim || String(r['Time'] || '').includes(tim);
-                return sOk && dOk && stOk && gOk && tOk;
-            });
-
-            updateStats(filtered);
-            renderTable(filtered);
-        }
-
-        function updateStats(data) {
-            const revenue = data.reduce((acc, r) => {
-                const t = Number(r['Total'] || 0), s = Number(r['Subtotal'] || 0), g = Number(r['GST'] || 0);
-                return acc + (t > 0 ? t : s + g);
-            }, 0);
-            document.getElementById('statTotal').textContent = data.length;
-            document.getElementById('statFood').textContent = data.filter(r => (r['Booking Type'] || '').toUpperCase() === 'FOOD').length;
-            document.getElementById('statConfirmed').textContent = data.filter(r => r['Status'] === 'Confirmed').length;
-            document.getElementById('statGuests').textContent = data.reduce((a, r) => { const g = parseInt(r['Guests']); return a + (isNaN(g) ? 0 : g); }, 0);
-            document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
-        }
-
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            document.getElementById('countDisplay').textContent = data.length;
-            document.getElementById('selectAll').checked = false;
-            updateBulkBar();
-            if (!data.length) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--ink-60);">No records found.</td></tr>';
-                return;
+            /* ── TABS ── */
+            function switchTab(name) {
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+                document.getElementById('panel-' + name).classList.add('active');
+                const idx = { bookings: 0, menu: 1 }[name];
+                document.querySelectorAll('.admin-tab')[idx].classList.add('active');
+                document.getElementById('bookingActions').style.display = name === 'bookings' ? '' : 'none';
+                if (name === 'menu' && !menuLoaded) loadMenuManage();
             }
-            tbody.innerHTML = data.map(row => {
-                const st = row['Status'] || 'Confirmed';
-                const cls = `status-${st.toLowerCase()}`;
-                const savedTotal = Number(row['Total'] || 0);
-                const savedSub = Number(row['Subtotal'] || 0);
-                const savedGST = Number(row['GST'] || 0);
-                const displayTotal = savedTotal > 0 ? savedTotal : savedSub > 0 ? savedSub + savedGST : null;
-                return `<tr class="${st.toLowerCase()}">
+
+            /* ── BOOKINGS ── */
+            function fetchData() {
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="9" style="text-align:center;padding:2rem;">Loading…</td></tr>';
+                fetch(SHEET_URL + '?action=all')
+                    .then(r => r.json())
+                    .then(d => { if (!d.success) throw new Error(d.error); allData = d.bookings; applyFilters(); updateCharts(); })
+                    .catch(err => showToast('Error', err.message || 'Failed', 'error'));
+            }
+
+            function resetFilters() {
+                ['fSearch', 'fDate', 'fStatus', 'fMinGuests', 'fTime'].forEach(id => document.getElementById(id).value = '');
+                applyFilters();
+            }
+
+            function applyFilters() {
+                const q = document.getElementById('fSearch').value.toLowerCase();
+                const date = document.getElementById('fDate').value;
+                const st = document.getElementById('fStatus').value.toLowerCase();
+                const minG = parseInt(document.getElementById('fMinGuests').value) || 0;
+                const tim = document.getElementById('fTime').value;
+
+                const filtered = allData.filter(r => {
+                    const sOk = !q || [r['Customer Name'], r['Booking Ref'], r['Phone'], r['Email']]
+                        .some(v => String(v || '').toLowerCase().includes(q));
+                    const raw = String(r['Date'] || '');
+                    const dNorm = raw.includes('/') ? raw.split('/').reverse().join('-') : raw.substring(0, 10);
+                    const dOk = !date || dNorm === date;
+                    const stOk = !st || String(r['Status'] || '').toLowerCase() === st;
+                    const gOk = !minG || (parseInt(r['Guests']) || 0) >= minG;
+                    const tOk = !tim || String(r['Time'] || '').includes(tim);
+                    return sOk && dOk && stOk && gOk && tOk;
+                });
+
+                updateStats(filtered);
+                renderTable(filtered);
+            }
+
+            function updateStats(data) {
+                const revenue = data.reduce((acc, r) => {
+                    const t = Number(r['Total'] || 0), s = Number(r['Subtotal'] || 0), g = Number(r['GST'] || 0);
+                    return acc + (t > 0 ? t : s + g);
+                }, 0);
+                document.getElementById('statTotal').textContent = data.length;
+                document.getElementById('statFood').textContent = data.filter(r => (r['Booking Type'] || '').toUpperCase() === 'FOOD').length;
+                document.getElementById('statConfirmed').textContent = data.filter(r => r['Status'] === 'Confirmed').length;
+                document.getElementById('statGuests').textContent = data.reduce((a, r) => { const g = parseInt(r['Guests']); return a + (isNaN(g) ? 0 : g); }, 0);
+                document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+            }
+
+            function renderTable(data) {
+                const tbody = document.getElementById('tableBody');
+                document.getElementById('countDisplay').textContent = data.length;
+                document.getElementById('selectAll').checked = false;
+                updateBulkBar();
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--ink-60);">No records found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map(row => {
+                    const st = row['Status'] || 'Confirmed';
+                    const cls = `status-${st.toLowerCase()}`;
+                    const savedTotal = Number(row['Total'] || 0);
+                    const savedSub = Number(row['Subtotal'] || 0);
+                    const savedGST = Number(row['GST'] || 0);
+                    const displayTotal = savedTotal > 0 ? savedTotal : savedSub > 0 ? savedSub + savedGST : null;
+                    return `<tr class="${st.toLowerCase()}">
           <td><input type="checkbox" class="row-check" value="${row['Booking Ref']}" onchange="updateBulkBar()"></td>
           <td style="font-family:monospace;font-weight:700;font-size:.72rem;white-space:nowrap;">${row['Booking Ref']}</td>
           <td style="white-space:nowrap;">${row['Date']}<br><span style="font-size:.72rem;color:var(--ink-60);">${row['Time']}</span></td>
@@ -797,107 +842,107 @@
             <button class="action-btn btn-delete" onclick="deleteBooking('${row['Booking Ref']}')">🗑</button>
           </td>
         </tr>`;
-            }).join('');
-        }
+                }).join('');
+            }
 
-        /* Actions */
-        function changeStatus(ref, st) {
-            fetch(`${SHEET_URL}?action=status&ref=${encodeURIComponent(ref)}&status=${encodeURIComponent(st)}`)
-                .then(r => r.json()).then(d => { if (d.success) { showToast('Updated', `${ref} → ${st}`); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
-        }
-        function deleteBooking(ref) {
-            if (!confirm(`Delete ${ref}?`)) return;
-            fetch(`${SHEET_URL}?action=delete&ref=${encodeURIComponent(ref)}`).then(r => r.json())
-                .then(d => { if (d.success) { showToast('Deleted', ref + ' removed.'); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
-        }
-        function openEditModal(ref) {
-            const row = allData.find(r => r['Booking Ref'] === ref); if (!row) return;
-            document.getElementById('editRef').value = ref;
-            document.getElementById('editName').value = row['Customer Name'] || '';
-            document.getElementById('editPhone').value = String(row['Phone'] || '').replace(/^'/, '');
-            const raw = String(row['Date'] || '');
-            document.getElementById('editDate').value = raw.includes('/') ? raw.split('/').reverse().join('-') : raw.substring(0, 10);
-            document.getElementById('editTime').value = row['Time'] || '';
-            document.getElementById('editGuests').value = row['Guests'] || 1;
-            document.getElementById('editModal').classList.add('open');
-        }
-        function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
-        function saveEdit(e) {
-            e.preventDefault();
-            const ref = document.getElementById('editRef').value;
-            const data = {
-                'Customer Name': document.getElementById('editName').value.trim(), 'Phone': document.getElementById('editPhone').value.trim(),
-                'Date': document.getElementById('editDate').value, 'Time': document.getElementById('editTime').value, 'Guests': document.getElementById('editGuests').value
-            };
-            fetch(`${SHEET_URL}?action=update&ref=${encodeURIComponent(ref)}&data=${encodeURIComponent(JSON.stringify(data))}`)
-                .then(r => r.json()).then(d => { if (d.success) { showToast('Saved', 'Booking updated.'); closeEditModal(); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
-        }
+            /* Actions */
+            function changeStatus(ref, st) {
+                fetch(`${SHEET_URL}?action=status&ref=${encodeURIComponent(ref)}&status=${encodeURIComponent(st)}`)
+                    .then(r => r.json()).then(d => { if (d.success) { showToast('Updated', `${ref} → ${st}`); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
+            }
+            function deleteBooking(ref) {
+                if (!confirm(`Delete ${ref}?`)) return;
+                fetch(`${SHEET_URL}?action=delete&ref=${encodeURIComponent(ref)}`).then(r => r.json())
+                    .then(d => { if (d.success) { showToast('Deleted', ref + ' removed.'); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
+            }
+            function openEditModal(ref) {
+                const row = allData.find(r => r['Booking Ref'] === ref); if (!row) return;
+                document.getElementById('editRef').value = ref;
+                document.getElementById('editName').value = row['Customer Name'] || '';
+                document.getElementById('editPhone').value = String(row['Phone'] || '').replace(/^'/, '');
+                const raw = String(row['Date'] || '');
+                document.getElementById('editDate').value = raw.includes('/') ? raw.split('/').reverse().join('-') : raw.substring(0, 10);
+                document.getElementById('editTime').value = row['Time'] || '';
+                document.getElementById('editGuests').value = row['Guests'] || 1;
+                document.getElementById('editModal').classList.add('open');
+            }
+            function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+            function saveEdit(e) {
+                e.preventDefault();
+                const ref = document.getElementById('editRef').value;
+                const data = {
+                    'Customer Name': document.getElementById('editName').value.trim(), 'Phone': document.getElementById('editPhone').value.trim(),
+                    'Date': document.getElementById('editDate').value, 'Time': document.getElementById('editTime').value, 'Guests': document.getElementById('editGuests').value
+                };
+                fetch(`${SHEET_URL}?action=update&ref=${encodeURIComponent(ref)}&data=${encodeURIComponent(JSON.stringify(data))}`)
+                    .then(r => r.json()).then(d => { if (d.success) { showToast('Saved', 'Booking updated.'); closeEditModal(); fetchData(); } else showToast('Error', d.error || 'Failed', 'error'); });
+            }
 
-        /* Bulk */
-        function toggleSelectAll(m) { document.querySelectorAll('.row-check').forEach(c => c.checked = m.checked); updateBulkBar(); }
-        function updateBulkBar() {
-            const checked = document.querySelectorAll('.row-check:checked');
-            document.getElementById('bulkBar').classList.toggle('visible', checked.length > 0);
-            document.getElementById('bulkCount').textContent = checked.length + ' selected';
-        }
-        function getSelectedRefs() { return [...document.querySelectorAll('.row-check:checked')].map(c => c.value); }
-        function bulkStatus(st) {
-            const refs = getSelectedRefs(); if (!refs.length) return;
-            Promise.all(refs.map(ref => fetch(`${SHEET_URL}?action=status&ref=${encodeURIComponent(ref)}&status=${encodeURIComponent(st)}`).then(r => r.json())))
-                .then(() => { showToast('Done', `${refs.length} → ${st}`); fetchData(); });
-        }
-        function bulkDelete() {
-            const refs = getSelectedRefs(); if (!refs.length || !confirm(`Delete ${refs.length} bookings?`)) return;
-            Promise.all(refs.map(ref => fetch(`${SHEET_URL}?action=delete&ref=${encodeURIComponent(ref)}`).then(r => r.json())))
-                .then(() => { showToast('Deleted', `${refs.length} removed.`); fetchData(); });
-        }
+            /* Bulk */
+            function toggleSelectAll(m) { document.querySelectorAll('.row-check').forEach(c => c.checked = m.checked); updateBulkBar(); }
+            function updateBulkBar() {
+                const checked = document.querySelectorAll('.row-check:checked');
+                document.getElementById('bulkBar').classList.toggle('visible', checked.length > 0);
+                document.getElementById('bulkCount').textContent = checked.length + ' selected';
+            }
+            function getSelectedRefs() { return [...document.querySelectorAll('.row-check:checked')].map(c => c.value); }
+            function bulkStatus(st) {
+                const refs = getSelectedRefs(); if (!refs.length) return;
+                Promise.all(refs.map(ref => fetch(`${SHEET_URL}?action=status&ref=${encodeURIComponent(ref)}&status=${encodeURIComponent(st)}`).then(r => r.json())))
+                    .then(() => { showToast('Done', `${refs.length} → ${st}`); fetchData(); });
+            }
+            function bulkDelete() {
+                const refs = getSelectedRefs(); if (!refs.length || !confirm(`Delete ${refs.length} bookings?`)) return;
+                Promise.all(refs.map(ref => fetch(`${SHEET_URL}?action=delete&ref=${encodeURIComponent(ref)}`).then(r => r.json())))
+                    .then(() => { showToast('Deleted', `${refs.length} removed.`); fetchData(); });
+            }
 
-        /* Export */
-        function exportCSV() {
-            if (!allData.length) return showToast('Empty', 'No data.', 'error');
-            const keys = Object.keys(allData[0]);
-            const rows = [keys.join(','), ...allData.map(r => keys.map(k => '"' + String(r[k] || '').replace(/"/g, '""') + '"').join(','))];
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
-            a.download = 'bookings.csv'; a.click();
-        }
+            /* Export */
+            function exportCSV() {
+                if (!allData.length) return showToast('Empty', 'No data.', 'error');
+                const keys = Object.keys(allData[0]);
+                const rows = [keys.join(','), ...allData.map(r => keys.map(k => '"' + String(r[k] || '').replace(/"/g, '""') + '"').join(','))];
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
+                a.download = 'bookings.csv'; a.click();
+            }
 
-        /* Charts */
-        function updateCharts() {
-            const sts = ['Confirmed', 'Cancelled', 'Completed'];
-            const stC = sts.map(s => allData.filter(r => r['Status'] === s).length);
-            const typs = ['FOOD', 'BOTH'];
-            const tyC = typs.map(t => allData.filter(r => (r['Booking Type'] || '').toUpperCase() === t).length);
-            if (charts.status) charts.status.destroy();
-            if (charts.type) charts.type.destroy();
-            charts.status = new Chart(document.getElementById('statusChart'), {
-                type: 'doughnut', data: { labels: sts, datasets: [{ data: stC, backgroundColor: ['#22c55e', '#ef4444', '#3b82f6'], borderWidth: 2 }] },
-                options: { plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Booking Status' } }, responsive: true, maintainAspectRatio: false }
-            });
-            charts.type = new Chart(document.getElementById('typeChart'), {
-                type: 'bar', data: { labels: typs, datasets: [{ label: 'Count', data: tyC, backgroundColor: ['rgba(232,160,48,.7)', 'rgba(79,70,229,.7)'], borderRadius: 6 }] },
-                options: { plugins: { legend: { display: false }, title: { display: true, text: 'Booking Types' } }, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-            });
-        }
+            /* Charts */
+            function updateCharts() {
+                const sts = ['Confirmed', 'Cancelled', 'Completed'];
+                const stC = sts.map(s => allData.filter(r => r['Status'] === s).length);
+                const typs = ['FOOD', 'BOTH'];
+                const tyC = typs.map(t => allData.filter(r => (r['Booking Type'] || '').toUpperCase() === t).length);
+                if (charts.status) charts.status.destroy();
+                if (charts.type) charts.type.destroy();
+                charts.status = new Chart(document.getElementById('statusChart'), {
+                    type: 'doughnut', data: { labels: sts, datasets: [{ data: stC, backgroundColor: ['#22c55e', '#ef4444', '#3b82f6'], borderWidth: 2 }] },
+                    options: { plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Booking Status' } }, responsive: true, maintainAspectRatio: false }
+                });
+                charts.type = new Chart(document.getElementById('typeChart'), {
+                    type: 'bar', data: { labels: typs, datasets: [{ label: 'Count', data: tyC, backgroundColor: ['rgba(232,160,48,.7)', 'rgba(79,70,229,.7)'], borderRadius: 6 }] },
+                    options: { plugins: { legend: { display: false }, title: { display: true, text: 'Booking Types' } }, responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
+            }
 
-        /* ── MENU MANAGEMENT ── */
-        function loadMenuManage() {
-            menuLoaded = true;
-            document.getElementById('menuManageGrid').innerHTML = '<p class="text-muted" style="padding:2rem;">Loading…</p>';
-            fetch(SHEET_URL + '?action=getMenu').then(r => r.json())
-                .then(res => { menuData = (res.menu || []).map(normalizeItem); renderMenuManage(); })
-                .catch(() => showToast('Error', 'Failed to load menu', 'error'));
-        }
-        function normalizeItem(m) { return { ...m, id: String(m.id), price: Number(m.price) || 0, icon: m.icon || '🍽️', desc: m.desc || '' }; }
-        function filterMenuCat(cat, btn) {
-            menuCat = cat;
-            document.querySelectorAll('#menuCatFilters .cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); renderMenuManage();
-        }
-        function renderMenuManage() {
-            const grid = document.getElementById('menuManageGrid');
-            const items = menuCat === 'all' ? menuData : menuData.filter(m => m.cat === menuCat);
-            if (!items.length) { grid.innerHTML = '<p class="text-muted" style="padding:2rem;text-align:center;">No items. Click "+ Add Item".</p>'; return; }
-            grid.innerHTML = items.map(m => `
+            /* ── MENU MANAGEMENT ── */
+            function loadMenuManage() {
+                menuLoaded = true;
+                document.getElementById('menuManageGrid').innerHTML = '<p class="text-muted" style="padding:2rem;">Loading…</p>';
+                fetch(SHEET_URL + '?action=getMenu').then(r => r.json())
+                    .then(res => { menuData = (res.menu || []).map(normalizeItem); renderMenuManage(); })
+                    .catch(() => showToast('Error', 'Failed to load menu', 'error'));
+            }
+            function normalizeItem(m) { return { ...m, id: String(m.id), price: Number(m.price) || 0, icon: m.icon || '🍽️', desc: m.desc || '' }; }
+            function filterMenuCat(cat, btn) {
+                menuCat = cat;
+                document.querySelectorAll('#menuCatFilters .cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); renderMenuManage();
+            }
+            function renderMenuManage() {
+                const grid = document.getElementById('menuManageGrid');
+                const items = menuCat === 'all' ? menuData : menuData.filter(m => m.cat === menuCat);
+                if (!items.length) { grid.innerHTML = '<p class="text-muted" style="padding:2rem;text-align:center;">No items. Click "+ Add Item".</p>'; return; }
+                grid.innerHTML = items.map(m => `
         <div class="manage-card">
           <div class="manage-card-title">
             <span style="font-size:1.3rem;">${m.icon}</span> ${m.name}
@@ -910,90 +955,173 @@
             <button class="btn-del-sm"  onclick="deleteMenuItem('${m.id}','${String(m.name).replace(/'/g, "\\'")}')">🗑 Delete</button>
           </div>
         </div>`).join('');
-        }
-        function openMenuModal() {
-            document.getElementById('menuForm').reset();
-            document.getElementById('miEditId').value = '';
-            document.getElementById('miId').readOnly = false;
-            document.getElementById('menuModalTitle').textContent = 'Add Menu Item';
-            document.getElementById('menuSaveBtn').textContent = 'Save Item';
-            document.getElementById('menuModal').classList.add('open');
-        }
-        function editMenuItem(m) {
-            document.getElementById('miEditId').value = m.id;
-            document.getElementById('miId').value = m.id; document.getElementById('miId').readOnly = true;
-            document.getElementById('miName').value = m.name;
-            document.getElementById('miDesc').value = m.desc || '';
-            document.getElementById('miPrice').value = m.price;
-            document.getElementById('miIcon').value = m.icon || '';
-            document.getElementById('miCat').value = m.cat || 'mains';
-            document.getElementById('miVeg').value = String(m.veg);
-            document.getElementById('menuModalTitle').textContent = 'Edit Item';
-            document.getElementById('menuSaveBtn').textContent = 'Update Item';
-            document.getElementById('menuModal').classList.add('open');
-        }
-        function closeMenuModal() { document.getElementById('menuModal').classList.remove('open'); }
-        function saveMenuItem(e) {
-            e.preventDefault();
-            const editId = document.getElementById('miEditId').value, isEdit = !!editId;
-            const item = {
-                id: document.getElementById('miId').value.trim(), name: document.getElementById('miName').value.trim(),
-                desc: document.getElementById('miDesc').value.trim(), price: document.getElementById('miPrice').value,
-                icon: document.getElementById('miIcon').value.trim() || '🍽️', cat: document.getElementById('miCat').value,
-                veg: document.getElementById('miVeg').value
-            };
-            const btn = document.getElementById('menuSaveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
-            fetch(`${SHEET_URL}?action=${isEdit ? 'updateMenuItem' : 'addMenuItem'}&data=${encodeURIComponent(JSON.stringify(item))}`)
-                .then(r => r.json()).then(res => {
-                    if (res.success) { showToast('Success', isEdit ? 'Item updated!' : 'Item added!'); closeMenuModal(); menuLoaded = false; loadMenuManage(); }
-                    else showToast('Error', res.error || 'Failed', 'error');
-                }).catch(() => showToast('Error', 'Network error', 'error'))
-                .finally(() => { btn.disabled = false; btn.textContent = isEdit ? 'Update Item' : 'Save Item'; });
-        }
-        function deleteMenuItem(id, name) {
-            if (!confirm(`Delete "${name}"?`)) return;
-            fetch(`${SHEET_URL}?action=deleteMenuItem&id=${encodeURIComponent(id)}`).then(r => r.json())
-                .then(res => { if (res.success) { showToast('Deleted', `"${name}" removed.`); menuLoaded = false; loadMenuManage(); } else showToast('Error', res.error || 'Failed', 'error'); });
-        }
+            }
+            function openMenuModal() {
+                document.getElementById('menuForm').reset();
+                document.getElementById('miEditId').value = '';
+                document.getElementById('miId').readOnly = false;
+                document.getElementById('menuModalTitle').textContent = 'Add Menu Item';
+                document.getElementById('menuSaveBtn').textContent = 'Save Item';
+                document.getElementById('menuModal').classList.add('open');
+            }
+            function editMenuItem(m) {
+                document.getElementById('miEditId').value = m.id;
+                document.getElementById('miId').value = m.id; document.getElementById('miId').readOnly = true;
+                document.getElementById('miName').value = m.name;
+                document.getElementById('miDesc').value = m.desc || '';
+                document.getElementById('miPrice').value = m.price;
+                document.getElementById('miIcon').value = m.icon || '';
+                document.getElementById('miCat').value = m.cat || 'mains';
+                document.getElementById('miVeg').value = String(m.veg);
+                document.getElementById('menuModalTitle').textContent = 'Edit Item';
+                document.getElementById('menuSaveBtn').textContent = 'Update Item';
+                document.getElementById('menuModal').classList.add('open');
+            }
+            function closeMenuModal() { document.getElementById('menuModal').classList.remove('open'); }
+            function saveMenuItem(e) {
+                e.preventDefault();
+                const editId = document.getElementById('miEditId').value, isEdit = !!editId;
+                const item = {
+                    id: document.getElementById('miId').value.trim(), name: document.getElementById('miName').value.trim(),
+                    desc: document.getElementById('miDesc').value.trim(), price: document.getElementById('miPrice').value,
+                    icon: document.getElementById('miIcon').value.trim() || '🍽️', cat: document.getElementById('miCat').value,
+                    veg: document.getElementById('miVeg').value
+                };
+                const btn = document.getElementById('menuSaveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
+                fetch(`${SHEET_URL}?action=${isEdit ? 'updateMenuItem' : 'addMenuItem'}&data=${encodeURIComponent(JSON.stringify(item))}`)
+                    .then(r => r.json()).then(res => {
+                        if (res.success) { showToast('Success', isEdit ? 'Item updated!' : 'Item added!'); closeMenuModal(); menuLoaded = false; loadMenuManage(); }
+                        else showToast('Error', res.error || 'Failed', 'error');
+                    }).catch(() => showToast('Error', 'Network error', 'error'))
+                    .finally(() => { btn.disabled = false; btn.textContent = isEdit ? 'Update Item' : 'Save Item'; });
+            }
+            function deleteMenuItem(id, name) {
+                if (!confirm(`Delete "${name}"?`)) return;
+                fetch(`${SHEET_URL}?action=deleteMenuItem&id=${encodeURIComponent(id)}`).then(r => r.json())
+                    .then(res => { if (res.success) { showToast('Deleted', `"${name}" removed.`); menuLoaded = false; loadMenuManage(); } else showToast('Error', res.error || 'Failed', 'error'); });
+            }
 
-        /* ── AUTO EMOJI ── */
-        const FOOD_EMOJI_MAP = [
-            ['butter chicken', '🍗'], ['chicken', '🍗'], ['mutton', '🥩'], ['lamb', '🥩'], ['fish', '🐟'], ['prawn', '🦐'], ['shrimp', '🦐'],
-            ['paneer', '🧀'], ['tofu', '🫘'], ['egg', '🥚'], ['omelette', '🍳'],
-            ['dal', '🍲'], ['lentil', '🍲'], ['soup', '🍜'], ['curry', '🍛'], ['masala', '🌶️'],
-            ['biryani', '🍚'], ['rice', '🍚'], ['pulao', '🍚'], ['fried rice', '🍳'],
-            ['naan', '🫓'], ['roti', '🫓'], ['paratha', '🥙'], ['bread', '🍞'], ['puri', '🍞'], ['kulcha', '🫓'],
-            ['samosa', '🥟'], ['pakora', '🥟'], ['bhaji', '🥦'], ['kachori', '🥟'],
-            ['salad', '🥗'], ['raita', '🥛'], ['chutney', '🫙'],
-            ['gulab jamun', '🍮'], ['kheer', '🍮'], ['halwa', '🍮'], ['ladoo', '🍮'], ['barfi', '🍮'], ['rasgulla', '🫧'],
-            ['ice cream', '🍦'], ['cake', '🎂'], ['pastry', '🥐'], ['brownie', '🍫'], ['sweet', '🍬'], ['dessert', '🍮'],
-            ['coffee', '☕'], ['tea', '🍵'], ['chai', '🍵'], ['lassi', '🥛'], ['juice', '🧃'],
-            ['lemonade', '🍋'], ['milkshake', '🥤'], ['soda', '🥤'], ['water', '💧'],
-            ['pizza', '🍕'], ['burger', '🍔'], ['sandwich', '🥪'], ['wrap', '🌯'], ['roll', '🌯'],
-            ['pasta', '🍝'], ['noodle', '🍜'], ['momos', '🥟'],
-            ['tandoori', '🔥'], ['kabab', '🍢'], ['kebab', '🍢'], ['tikka', '🍢'],
-            ['chaat', '🥗'], ['chole', '🫘'], ['dosa', '🥞'], ['idli', '⚪'], ['dhokla', '🟡'],
-            ['mushroom', '🍄'], ['corn', '🌽'], ['potato', '🥔'], ['tomato', '🍅'],
-            ['snack', '🍟'], ['fries', '🍟'],
-        ];
-        function autoFillIcon(name) {
-            const f = document.getElementById('miIcon');
-            if (!f || f.value) return;
-            const lower = name.toLowerCase();
-            for (const [kw, em] of FOOD_EMOJI_MAP) { if (lower.includes(kw)) { f.value = em; return; } }
-            f.value = '🍽️';
-        }
+            /* ── TABLE MANAGEMENT ── */
+            let tablesData = [], tablesLoaded = false;
+            function loadTablesManage() {
+                tablesLoaded = true;
+                document.getElementById('tablesManageGrid').innerHTML = '<p class="text-muted" style="padding:2rem;">Loading tables…</p>';
+                fetch(SHEET_URL + '?action=getTables').then(r => r.json())
+                    .then(res => { tablesData = res.tables || []; renderTablesManage(); })
+                    .catch(() => showToast('Error', 'Failed to load tables', 'error'));
+            }
+            function renderTablesManage() {
+                const grid = document.getElementById('tablesManageGrid');
+                if (!tablesData.length) { grid.innerHTML = '<p class="text-muted" style="padding:2rem;text-align:center;">No tables. Click "+ Add Table".</p>'; return; }
+                grid.innerHTML = tablesData.map(t => `
+        <div class="manage-card">
+          <div class="manage-card-title">
+            <span style="font-size:1.3rem;">${t.icon || '🪑'}</span> ${t.name}
+          </div>
+          <div class="manage-card-meta">Capacity: <strong>${t.cap || t.capacity || 2}</strong></div>
+          <div class="manage-card-meta">Status: <strong style="color:${t.status === 'Available' ? 'var(--green)' : 'var(--red)'}">${t.status || 'Active'}</strong> · ID: <code>${t.id}</code></div>
+          <div class="manage-card-actions">
+            <button class="btn-edit-sm" onclick='editTableItem(${JSON.stringify(t)})'>✏️ Edit</button>
+            <button class="btn-del-sm"  onclick="deleteTableItem('${t.id}','${String(t.name).replace(/'/g, "\\'")}')">🗑 Delete</button>
+          </div>
+        </div>`).join('');
+            }
+            function openTableModal() {
+                document.getElementById('tableForm').reset();
+                document.getElementById('tabEditId').value = '';
+                document.getElementById('tabId').readOnly = false;
+                document.getElementById('tableModalTitle').textContent = 'Add Table';
+                document.getElementById('tableSaveBtn').textContent = 'Save Table';
+                document.getElementById('tableModal').classList.add('open');
+            }
+            function editTableItem(t) {
+                document.getElementById('tabEditId').value = t.id;
+                document.getElementById('tabId').value = t.id; document.getElementById('tabId').readOnly = true;
+                document.getElementById('tabName').value = t.name;
+                document.getElementById('tabCap').value = t.cap || t.capacity || 2;
+                document.getElementById('tabStatus').value = t.status || 'Available';
+                document.getElementById('tabIcon').value = t.icon || '';
+                document.getElementById('tableModalTitle').textContent = 'Edit Table';
+                document.getElementById('tableSaveBtn').textContent = 'Update Table';
+                document.getElementById('tableModal').classList.add('open');
+            }
+            function closeTableModal() { document.getElementById('tableModal').classList.remove('open'); }
+            function saveTable(e) {
+                e.preventDefault();
+                const editId = document.getElementById('tabEditId').value, isEdit = !!editId;
+                const tab = {
+                    id: document.getElementById('tabId').value.trim(), name: document.getElementById('tabName').value.trim(),
+                    cap: document.getElementById('tabCap').value, status: document.getElementById('tabStatus').value,
+                    icon: document.getElementById('tabIcon').value.trim() || '🪑'
+                };
+                const btn = document.getElementById('tableSaveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
+                fetch(`${SHEET_URL}?action=${isEdit ? 'updateTable' : 'addTable'}&data=${encodeURIComponent(JSON.stringify(tab))}`)
+                    .then(r => r.json()).then(res => {
+                        if (res.success) { showToast('Success', isEdit ? 'Table updated!' : 'Table added!'); closeTableModal(); tablesLoaded = false; loadTablesManage(); }
+                        else showToast('Error', res.error || 'Failed', 'error');
+                    }).catch(() => showToast('Error', 'Network error', 'error'))
+                    .finally(() => { btn.disabled = false; btn.textContent = isEdit ? 'Update Table' : 'Save Table'; });
+            }
+            function deleteTableItem(id, name) {
+                if (!confirm(`Delete table "${name}"?`)) return;
+                fetch(`${SHEET_URL}?action=deleteTable&id=${encodeURIComponent(id)}`).then(r => r.json())
+                    .then(res => { if (res.success) { showToast('Deleted', `"${name}" removed.`); tablesLoaded = false; loadTablesManage(); } else showToast('Error', res.error || 'Failed', 'error'); });
+            }
 
-        /* ── TOAST ── */
-        function showToast(title, msg, type = 'success') {
-            const c = document.getElementById('toastContainer');
-            const t = document.createElement('div'); t.className = 'toast ' + type;
-            t.innerHTML = `<h4>${title}</h4><p>${msg}</p>`; c.appendChild(t);
-            setTimeout(() => t.classList.add('show'), 10);
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
-        }
-        function logout() { sessionStorage.removeItem(SESSION_KEY); window.location.href = 'login.html'; }
-    </script>
+            /* ── OVERRIDE switchTab for TABLES ── */
+            function switchTab(name) {
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+                document.getElementById('panel-' + name).classList.add('active');
+
+                // Active button class
+                const idx = { bookings: 0, menu: 1, tables: 2 }[name];
+                document.querySelectorAll('.admin-tab')[idx].classList.add('active');
+
+                document.getElementById('bookingActions').style.display = name === 'bookings' ? '' : 'none';
+
+                if (name === 'menu' && !menuLoaded) loadMenuManage();
+                if (name === 'tables' && !tablesLoaded) loadTablesManage();
+            }
+
+            /* ── AUTO EMOJI ── */
+            const FOOD_EMOJI_MAP = [
+                ['butter chicken', '🍗'], ['chicken', '🍗'], ['mutton', '🥩'], ['lamb', '🥩'], ['fish', '🐟'], ['prawn', '🦐'], ['shrimp', '🦐'],
+                ['paneer', '🧀'], ['tofu', '🫘'], ['egg', '🥚'], ['omelette', '🍳'],
+                ['dal', '🍲'], ['lentil', '🍲'], ['soup', '🍜'], ['curry', '🍛'], ['masala', '🌶️'],
+                ['biryani', '🍚'], ['rice', '🍚'], ['pulao', '🍚'], ['fried rice', '🍳'],
+                ['naan', '🫓'], ['roti', '🫓'], ['paratha', '🥙'], ['bread', '🍞'], ['puri', '🍞'], ['kulcha', '🫓'],
+                ['samosa', '🥟'], ['pakora', '🥟'], ['bhaji', '🥦'], ['kachori', '🥟'],
+                ['salad', '🥗'], ['raita', '🥛'], ['chutney', '🫙'],
+                ['gulab jamun', '🍮'], ['kheer', '🍮'], ['halwa', '🍮'], ['ladoo', '🍮'], ['barfi', '🍮'], ['rasgulla', '🫧'],
+                ['ice cream', '🍦'], ['cake', '🎂'], ['pastry', '🥐'], ['brownie', '🍫'], ['sweet', '🍬'], ['dessert', '🍮'],
+                ['coffee', '☕'], ['tea', '🍵'], ['chai', '🍵'], ['lassi', '🥛'], ['juice', '🧃'],
+                ['lemonade', '🍋'], ['milkshake', '🥤'], ['soda', '🥤'], ['water', '💧'],
+                ['pizza', '🍕'], ['burger', '🍔'], ['sandwich', '🥪'], ['wrap', '🌯'], ['roll', '🌯'],
+                ['pasta', '🍝'], ['noodle', '🍜'], ['momos', '🥟'],
+                ['tandoori', '🔥'], ['kabab', '🍢'], ['kebab', '🍢'], ['tikka', '🍢'],
+                ['chaat', '🥗'], ['chole', '🫘'], ['dosa', '🥞'], ['idli', '⚪'], ['dhokla', '🟡'],
+                ['mushroom', '🍄'], ['corn', '🌽'], ['potato', '🥔'], ['tomato', '🍅'],
+                ['snack', '🍟'], ['fries', '🍟'],
+            ];
+            function autoFillIcon(name) {
+                const f = document.getElementById('miIcon');
+                if (!f || f.value) return;
+                const lower = name.toLowerCase();
+                for (const [kw, em] of FOOD_EMOJI_MAP) { if (lower.includes(kw)) { f.value = em; return; } }
+                f.value = '🍽️';
+            }
+
+            /* ── TOAST ── */
+            function showToast(title, msg, type = 'success') {
+                const c = document.getElementById('toastContainer');
+                const t = document.createElement('div'); t.className = 'toast ' + type;
+                t.innerHTML = `<h4>${title}</h4><p>${msg}</p>`; c.appendChild(t);
+                setTimeout(() => t.classList.add('show'), 10);
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
+            }
+            function logout() { sessionStorage.removeItem(SESSION_KEY); window.location.href = 'login.html'; }
+        </script>
 </body>
 
 </html>

@@ -360,6 +360,19 @@
       <!-- LEFT: Menu -->
       <div class="left-panel">
 
+        <!-- Table Picker (Visible only in 'both' mode) -->
+        <div id="tablePicker" style="display:none;margin-bottom:2rem;">
+          <h2
+            style="font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:.8rem;border-bottom:1.5px solid var(--border);padding-bottom:.4rem;">
+            📍 Select a Table
+          </h2>
+          <div class="table-grid animate-children" id="tableGridContainer">
+            <p class="text-muted" style="text-align:center;padding:1rem;grid-column:1/-1;">Loading tables…</p>
+          </div>
+          <input type="hidden" id="selectedTableId" />
+          <input type="hidden" id="selectedTableName" />
+        </div>
+
         <!-- Search + Filter -->
         <div>
           <div class="search-wrap">
@@ -539,6 +552,10 @@
     let MENU = [], cart = {};
     let menuFilter = 'all';
 
+    // Mode Detection
+    const urlParams = new URLSearchParams(window.location.search);
+    const MODE = urlParams.get('mode') === 'both' ? 'both' : 'food';
+
     /* ── INIT ── */
     window.onload = () => {
       if (sessionStorage.getItem(SESSION_KEY) === "admin")
@@ -556,22 +573,122 @@
       document.getElementById("dateInput").min = localDate;
       document.getElementById("dateInput").value = localDate;
 
-      fetch(`${SHEET_URL}?action=getMenu`)
-        .then(r => r.json())
-        .then(res => {
-          if (res.success && res.menu.length) {
-            MENU = res.menu.map(m => ({
-              ...m,
-              id: String(m.id),
-              icon: m.icon || '🍽️',
-              desc: m.desc || '',
-              price: Number(m.price) || 0
+      // Adjust UI based on mode
+      if (MODE === 'both') {
+        document.title = "IOCL Officer Club — Reserve Table";
+        document.getElementById("heroBadge").textContent = "✨ Reserve & Pre-order";
+        document.getElementById("heroTitle").innerHTML = "Reserve Your <em>Table</em>";
+        document.getElementById("heroText").textContent = "Select a table and pre-order your favorite dishes in one go.";
+        document.getElementById("tablePicker").style.display = "block";
+        document.querySelector(".section-label").textContent = "Your Reservation Details";
+
+        // Add event listeners for dynamic availability
+        document.getElementById("dateInput").addEventListener("change", fetchAvailability);
+        document.getElementById("timeInput").addEventListener("change", fetchAvailability);
+      }
+
+      // Fetch Data
+      const pMenu = fetch(`${SHEET_URL}?action=getMenu`).then(r => r.json());
+      const pTables = MODE === 'both' ? fetch(`${SHEET_URL}?action=getTables`).then(r => r.json()) : Promise.resolve({ success: true, tables: [] });
+
+      Promise.all([pMenu, pTables])
+        .then(([resMenu, resTables]) => {
+          if (resMenu.success && resMenu.menu.length) {
+            MENU = resMenu.menu.map(m => ({
+              ...m, id: String(m.id), icon: m.icon || '🍽️', desc: m.desc || '', price: Number(m.price) || 0
             }));
           }
           renderMenu();
+
+          if (MODE === 'both' && resTables.success) {
+            window.ALL_TABLES = resTables.tables || [];
+            fetchAvailability(); // Load initial availability
+          }
         })
-        .catch(() => { showToast("Warning", "Could not load menu.", "warning"); renderMenu(); });
+        .catch(() => {
+          showToast("Warning", "Could not load all data.", "warning");
+          renderMenu();
+        });
     };
+
+    /* ── TABLE PICKER & AVAILABILITY ── */
+    function fetchAvailability() {
+      if (MODE !== 'both') return;
+
+      const date = document.getElementById("dateInput").value;
+      const time = document.getElementById("timeInput").value;
+      const grid = document.getElementById("tableGridContainer");
+
+      if (!time) {
+        // Just render them all available if no time is picked yet, but disabled
+        grid.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;grid-column:1/-1;">Please select a Time Slot below to see available tables.</p>';
+        return;
+      }
+
+      grid.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;grid-column:1/-1;">Checking availability…</p>';
+
+      fetch(`${SHEET_URL}?action=today&date=${date}`)
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success) throw new Error("Failed");
+          const bookings = res.bookings || [];
+
+          // Determine which tables are booked
+          const bookedTableIds = bookings.map(b => {
+            // We only care if the booking matches the exact time slot the user selected
+            if (b["Time"] === time && b["Status"] !== "Cancelled") return String(b["Table ID"]);
+            return null;
+          }).filter(Boolean);
+
+          const tablesWithStatus = window.ALL_TABLES.map(t => {
+            return { ...t, status: bookedTableIds.includes(String(t.id)) ? 'Booked' : 'Available' };
+          });
+
+          renderTablePicker(tablesWithStatus);
+        })
+        .catch(() => {
+          grid.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;grid-column:1/-1;color:var(--red);">Failed to check availability.</p>';
+        });
+    }
+
+    function renderTablePicker(data) {
+      const grid = document.getElementById("tableGridContainer");
+      if (!data || !data.length) {
+        grid.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;grid-column:1/-1;">No tables found in system.</p>';
+        return;
+      }
+
+      const selectedId = document.getElementById('selectedTableId').value;
+
+      grid.innerHTML = data.map(t => {
+        const isBooked = t.status === 'Booked';
+        const isSelected = String(t.id) === selectedId && !isBooked;
+
+        return `
+          <div class="table-node ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}" id="tabNode_${t.id}"
+               onclick="${isBooked ? '' : `selectTable('${t.id}', '${String(t.name).replace(/'/g, "\\'")}')`}">
+            <span class="t-icon">${t.icon || '🪑'}</span>
+            <span class="t-name">${t.name}</span>
+            <span class="t-cap">${t.cap || t.capacity || 2} ${t.cap == 1 ? 'Person' : 'People'}</span>
+            <span class="t-status">${t.status}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Clear selection if the selected table is now booked
+      if (selectedId && data.find(x => String(x.id) === selectedId)?.status === 'Booked') {
+        document.getElementById('selectedTableId').value = '';
+        document.getElementById('selectedTableName').value = '';
+      }
+    }
+
+    function selectTable(id, name) {
+      document.querySelectorAll('.table-node').forEach(n => n.classList.remove('selected'));
+      document.getElementById('tabNode_' + id).classList.add('selected');
+      document.getElementById('selectedTableId').value = id;
+      document.getElementById('selectedTableName').value = name;
+    }
+
 
     /* ── RENDER MENU ── */
     function setFilter(cat, el) {
@@ -678,13 +795,24 @@
     /* ── SUBMIT BOOKING ── */
     function submitBooking() {
       const count = Object.values(cart).reduce((a, b) => a + b, 0);
-      if (!count) return showToast("Cart Empty", "Add at least one item.", "error");
 
       const name = document.getElementById("guestName").value.trim();
       const phone = document.getElementById("guestPhone").value.trim();
       const date = document.getElementById("dateInput").value;
       const time = document.getElementById("timeInput").value;
       if (!name || !phone || !date || !time) return showToast("Missing Info", "Fill all required fields.", "error");
+
+      const tableId = document.getElementById("selectedTableId")?.value;
+      const tableName = document.getElementById("selectedTableName")?.value;
+
+      if (MODE === 'both') {
+        if (!tableId) return showToast("Missing Info", "Please select a table to reserve.", "warning");
+        // In both mode you don't *strictly* need food, but let's encourage it. 
+        // If they want Table-only, wait, choice is Food Only OR Food+Table. So you CAN require food.
+        if (!count) return showToast("Cart Empty", "Please add at least one dish for your reservation.", "warning");
+      } else {
+        if (!count) return showToast("Cart Empty", "Add at least one item.", "error");
+      }
 
       const btn = document.getElementById("submitBtn");
       btn.disabled = true; btn.textContent = "Confirming…";
@@ -704,10 +832,10 @@
         email: document.getElementById("email").value,
         date, time,
         guests: document.getElementById("guests").value,
-        table: "N/A (Food Only)",
-        table_id: 0,
+        table: MODE === 'both' ? tableName : "N/A (Food Only)",
+        table_id: MODE === 'both' ? tableId : 0,
         special: document.getElementById("special").value,
-        type: "FOOD",
+        type: MODE === 'both' ? "BOTH" : "FOOD",
         menu: menuSummary || "No items",
         subtotal, gst, total
       };
@@ -715,11 +843,14 @@
       fetch(SHEET_URL, { method: "POST", body: JSON.stringify(payload) })
         .then(r => r.json())
         .then(d => {
-          btn.disabled = false; btn.textContent = "✔ Confirm Order";
+          btn.disabled = false; btn.textContent = MODE === 'both' ? "✔ Confirm Reservation" : "✔ Confirm Order";
           if (d.success) {
             document.getElementById("modalRef").textContent = payload.ref;
             document.getElementById("successModal").classList.add("show");
             cart = {};
+            document.getElementById("selectedTableId").value = '';
+            document.getElementById("selectedTableName").value = '';
+            document.querySelectorAll('.table-node').forEach(n => n.classList.remove('selected'));
             updateCartUI();
             renderMenu();
           } else {
