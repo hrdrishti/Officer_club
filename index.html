@@ -44,12 +44,10 @@
     </ul>
   </nav>
 
-  <!-- HERO -->
   <header class="hero" style="padding:2rem 1rem 1.5rem;">
     <span class="badge" id="heroBadge">✦ Online Reservation ✦</span>
     <h1 id="heroTitle" style="font-size:2rem;margin-bottom:0.5rem;">Experience the <em>Extraordinary</em></h1>
-    <p id="heroText" style="max-width:480px;font-size:0.88rem;">Reserve your table and enjoy authentic flavors in a
-      modern, elegant setting.</p>
+    <p id="heroText" style="max-width:480px;font-size:0.88rem;">Order delicious food and enjoy authentic flavours.</p>
   </header>
 
   <!-- BOOKING SECTION -->
@@ -77,11 +75,21 @@
         <!-- Form Header -->
         <div style="margin-bottom:1.2rem;border-bottom:1px solid rgba(0,0,0,0.06);padding-bottom:0.8rem;">
           <h3 id="formTitle" style="margin:0 0 0.2rem;font-size:1.1rem;">Order Details</h3>
-          <p id="formSubtitle" class="text-muted" style="margin:0;font-size:0.8rem;">Fill in your details and we'll get
-            your food ready.</p>
+          <p id="formSubtitle" class="text-muted" style="margin:0;font-size:0.8rem;">Fill in your details below.</p>
         </div>
 
         <form onsubmit="return false;">
+
+          <!-- Table Picker (BOTH mode only) -->
+          <div id="tablePicker" style="display:none;margin-bottom:0.9rem;">
+            <label class="form-label" style="font-size:0.78rem;">🪑 Select Table *</label>
+            <div id="tablePickerGrid"
+              style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.5rem;margin-top:0.4rem;">
+              <p class="text-muted" style="font-size:0.8rem;">Loading tables…</p>
+            </div>
+            <input type="hidden" id="selectedTableId" />
+            <input type="hidden" id="selectedTableName" />
+          </div>
 
           <!-- Name -->
           <div class="form-group" style="margin-bottom:0.75rem;">
@@ -128,7 +136,7 @@
           </div>
 
           <!-- Guests -->
-          <div class="form-group" id="guestsGroup" style="margin-bottom:0.75rem;">
+          <div class="form-group" style="margin-bottom:0.75rem;">
             <label class="form-label" style="font-size:0.78rem;">👥 No. of Guests</label>
             <select id="guests" class="form-select">
               <option value="1">1 Person</option>
@@ -226,57 +234,85 @@
   <script>
     /* CONFIG & STATE */
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
+    const MODE = new URLSearchParams(window.location.search).get('mode') || 'food';
 
-    let MENU = [];   // Loaded from Sheets
-    let TABLES = []; // Loaded from Sheets
-    let cart = {};   // itemId -> quantity
+    let MENU = [], TABLES = [], cart = {};
 
     /* INIT */
     window.onload = () => {
-      // Admin Check
-      if (sessionStorage.getItem(SESSION_KEY) === "admin") {
+      if (sessionStorage.getItem(SESSION_KEY) === "admin")
         document.getElementById("adminLink").style.display = "block";
+
+      // Mode UI
+      if (MODE === 'both') {
+        document.getElementById('heroBadge').textContent = '✨ Table + Food Booking ✨';
+        document.getElementById('heroTitle').innerHTML = 'Reserve Your <em>Table</em>';
+        document.getElementById('heroText').textContent = 'Pick your table and pre-order your meal.';
+        document.getElementById('formTitle').textContent = '🪑 Table + Food Booking';
+        document.getElementById('formSubtitle').textContent = 'Select a table, then fill in your details.';
+        document.getElementById('tablePicker').style.display = 'block';
+      } else {
+        document.getElementById('heroBadge').textContent = '🥡 Food Order ✦';
+        document.getElementById('heroTitle').innerHTML = 'Order <em>Delicious Food</em>';
+        document.getElementById('heroText').textContent = 'Browse our menu and pre-order your favourite dishes.';
+        document.getElementById('formTitle').textContent = '🥡 Food Order Details';
+        document.getElementById('formSubtitle').textContent = "Fill in your details and we'll get your food ready.";
       }
 
-      // Pre-fill name & phone from login session
       const savedName = sessionStorage.getItem("sg_name");
       const savedMobile = sessionStorage.getItem("sg_mobile");
-      if (savedName && document.getElementById("guestName")) document.getElementById("guestName").value = savedName;
-      if (savedMobile && document.getElementById("guestPhone")) document.getElementById("guestPhone").value = savedMobile;
-
-      // Show user name in nav
+      if (savedName) document.getElementById("guestName").value = savedName;
+      if (savedMobile) document.getElementById("guestPhone").value = savedMobile;
       const navName = document.getElementById("navUserName");
       if (navName && savedName) navName.textContent = "👤 " + savedName;
 
-      // Set Date Restrictions
       const now = new Date();
-      const offset = now.getTimezoneOffset() * 60000;
-      const localDate = new Date(now - offset).toISOString().split("T")[0];
+      const localDate = new Date(now - now.getTimezoneOffset() * 60000).toISOString().split("T")[0];
       document.getElementById("dateInput").min = localDate;
       document.getElementById("dateInput").value = localDate;
 
-      // Load menu & tables from Sheets, then render
       Promise.all([
         fetch(`${SHEET_URL}?action=getMenu`).then(r => r.json()),
         fetch(`${SHEET_URL}?action=getTables`).then(r => r.json())
       ]).then(([menuRes, tablesRes]) => {
         if (menuRes.success && menuRes.menu.length) {
-          // Normalize: ensure id is always string, icon/desc have fallbacks
           MENU = menuRes.menu.map(m => ({
-            ...m,
-            id: String(m.id),
-            icon: m.icon || '🍽️',
-            desc: m.desc || '',
-            price: Number(m.price) || 0
+            ...m, id: String(m.id), icon: m.icon || '🍽️', desc: m.desc || '', price: Number(m.price) || 0
           }));
         }
-        if (tablesRes.success && tablesRes.tables.length) TABLES = tablesRes.tables;
+        if (tablesRes.success && tablesRes.tables.length) {
+          TABLES = tablesRes.tables;
+          if (MODE === 'both') renderTablePicker();
+        }
         renderMenu();
-      }).catch(() => {
-        showToast("Warning", "Could not load menu from server.", "warning");
-        renderMenu();
-      });
+      }).catch(() => { showToast("Warning", "Could not load data.", "warning"); renderMenu(); });
     };
+
+    /* ── Table Picker ── */
+    function renderTablePicker() {
+      const grid = document.getElementById('tablePickerGrid');
+      if (!TABLES.length) { grid.innerHTML = '<p class="text-muted" style="font-size:0.8rem;">No tables available.</p>'; return; }
+      grid.innerHTML = TABLES.map(t => `
+        <div id="tcard_${t.id}" onclick="selectTable(${t.id},'${String(t.name).replace(/'/g, "\\'")}')"
+          style="cursor:pointer;border:2px solid var(--glass-border);border-radius:var(--radius-md);
+                 padding:0.6rem 0.4rem;text-align:center;transition:0.2s;background:rgba(255,255,255,0.85);">
+          <div style="font-size:1.5rem;">${t.icon || '🪑'}</div>
+          <div style="font-weight:700;font-size:0.8rem;margin-top:2px;">${t.name}</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);">≤ ${t.cap} guests</div>
+        </div>`).join('');
+    }
+
+    function selectTable(id, name) {
+      document.querySelectorAll('[id^="tcard_"]').forEach(c => {
+        c.style.borderColor = 'var(--glass-border)';
+        c.style.background = 'rgba(255,255,255,0.85)';
+        c.style.boxShadow = '';
+      });
+      const card = document.getElementById('tcard_' + id);
+      if (card) { card.style.borderColor = 'var(--gold)'; card.style.background = 'rgba(200,134,10,0.07)'; card.style.boxShadow = 'var(--shadow-gold)'; }
+      document.getElementById('selectedTableId').value = id;
+      document.getElementById('selectedTableName').value = name;
+    }
 
     /* ------ RENDER FUNCTIONS ------ */
 
@@ -395,9 +431,7 @@
     /* ------ BOOKING LOGIC ------ */
     function submitBooking() {
       const cartTotalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-      if (cartTotalItems === 0) {
-        return showToast("Cart Empty", "Please add at least one item to your order.", "error");
-      }
+      if (cartTotalItems === 0) return showToast("Cart Empty", "Please add at least one item.", "error");
 
       const name = document.getElementById("guestName").value.trim();
       const phone = document.getElementById("guestPhone").value.trim();
@@ -406,40 +440,36 @@
 
       if (!name || !phone || !date || !time) return showToast("Missing Info", "Fill all required fields (*)", "error");
 
+      // Table validation for 'both' mode
+      const tableId = document.getElementById("selectedTableId")?.value;
+      const tableName = document.getElementById("selectedTableName")?.value;
+      if (MODE === 'both' && !tableId) return showToast("Select Table", "Please select a table first.", "error");
+
       const btn = document.getElementById("submitBtn");
-      btn.disabled = true;
-      btn.textContent = "Confirming...";
+      btn.disabled = true; btn.textContent = "Confirming...";
 
       const menuSummary = Object.keys(cart).map(id => {
         const item = MENU.find(x => x.id === id);
         return `${item.name} (x${cart[id]})`;
       }).join(", ");
 
-      const subtotal = Object.keys(cart).reduce((sum, id) => {
-        const item = MENU.find(x => x.id === id);
-        return sum + item.price * cart[id];
-      }, 0);
+      const subtotal = Object.keys(cart).reduce((sum, id) => sum + (MENU.find(x => x.id === id)?.price || 0) * cart[id], 0);
       const gst = Math.round(subtotal * 0.18);
       const grandTotal = subtotal + gst;
 
       const payload = {
-        ref: "SG-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        ref: "IOCL-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
         emp_no: phone,
-        name: name,
-        phone: phone,
+        name, phone,
         email: document.getElementById("email").value,
-        date: date,
-        time: time,
+        date, time,
         guests: document.getElementById("guests").value,
-        table: "N/A (Food Only)",
-        table_id: 0,
+        table: MODE === 'both' ? tableName : "N/A (Food Only)",
+        table_id: MODE === 'both' ? tableId : 0,
         special: document.getElementById("special").value,
-        status: "Confirmed",
-        type: "FOOD",
+        type: MODE === 'both' ? "BOTH" : "FOOD",
         menu: menuSummary || "No items",
-        subtotal: subtotal,
-        gst: gst,
-        total: grandTotal
+        subtotal, gst, total: grandTotal
       };
 
       fetch(SHEET_URL, {

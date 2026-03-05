@@ -119,13 +119,21 @@
                 </p>
             </div>
 
-            <div class="choice-grid" style="grid-template-columns:minmax(260px, 420px);justify-content:center;">
-                <!-- ORDER FOOD -->
-                <a href="index.html" class="choice-card">
+            <div class="choice-grid"
+                style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));max-width:600px;margin:0 auto;">
+                <!-- FOOD ONLY -->
+                <a href="index.html?mode=food" class="choice-card">
                     <div class="choice-icon">🥡</div>
-                    <h3>Order Food</h3>
+                    <h3>Food Only</h3>
                     <p>Browse our menu and pre-order your favourite dishes. Quick, easy, and delicious.</p>
-                    <div class="btn-choice">Place Order</div>
+                    <div class="btn-choice">Order Food</div>
+                </a>
+                <!-- FOOD + TABLE -->
+                <a href="index.html?mode=both" class="choice-card">
+                    <div class="choice-icon">✨</div>
+                    <h3>Food + Table</h3>
+                    <p>Reserve a table and pre-order your meal — the complete dining experience.</p>
+                    <div class="btn-choice" style="background:var(--text-main);">Book Now</div>
                 </a>
             </div>
 
