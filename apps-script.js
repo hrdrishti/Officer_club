@@ -251,7 +251,7 @@ function doGet(e) {
         var tablesSheet = getTablesSheet();
         var tbl = JSON.parse(params.data);
         if (!tbl.id || !tbl.name) return jsonResponse({ success: false, error: "id and name required" });
-        tablesSheet.appendRow([Number(tbl.id), tbl.name, Number(tbl.cap) || 2, tbl.icon || "🪑"]);
+        tablesSheet.appendRow([Number(tbl.id), tbl.name, Number(tbl.cap) || 2, tbl.status || "Available", tbl.icon || "🪑"]);
         return jsonResponse({ success: true });
       } finally { lock.releaseLock(); }
     }
@@ -264,7 +264,7 @@ function doGet(e) {
         var tbl = JSON.parse(params.data);
         var rowIdx = getTableRowById(tablesSheet, tbl.id);
         if (rowIdx === -1) return jsonResponse({ success: false, error: "Table not found" });
-        tablesSheet.getRange(rowIdx, 1, 1, 4).setValues([[Number(tbl.id), tbl.name, Number(tbl.cap) || 2, tbl.icon || "🪑"]]);
+        tablesSheet.getRange(rowIdx, 1, 1, 5).setValues([[Number(tbl.id), tbl.name, Number(tbl.cap) || 2, tbl.status || "Available", tbl.icon || "🪑"]]);
         return jsonResponse({ success: true });
       } finally { lock.releaseLock(); }
     }
@@ -381,7 +381,7 @@ function getMenuData(sheet) {
 }
 
 /* ---- Tables Sheet helpers ---- */
-var TABLES_HEADERS = ["id", "name", "cap", "icon"];
+var TABLES_HEADERS = ["id", "name", "cap", "status", "icon"];
 
 function getTablesSheet() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
@@ -403,6 +403,7 @@ function getTablesData(sheet) {
     TABLES_HEADERS.forEach(function (h, i) { obj[h] = row[i]; });
     obj["id"] = Number(obj["id"]) || 0;
     obj["cap"] = Number(obj["cap"]) || 2;
+    obj["status"] = obj["status"] || "Available";
     return obj;
   }).filter(function (r) { return r["id"] && r["name"]; });
 }

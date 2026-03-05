@@ -818,10 +818,17 @@
                 document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
                 document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
                 document.getElementById('panel-' + name).classList.add('active');
-                const idx = { bookings: 0, menu: 1 }[name];
-                document.querySelectorAll('.admin-tab')[idx].classList.add('active');
+
+                // Active button class
+                const idx = { bookings: 0, menu: 1, tables: 2 }[name];
+                if (idx !== undefined) {
+                    document.querySelectorAll('.admin-tab')[idx].classList.add('active');
+                }
+
                 document.getElementById('bookingActions').style.display = name === 'bookings' ? '' : 'none';
+
                 if (name === 'menu' && !menuLoaded) loadMenuManage();
+                if (name === 'tables' && !tablesLoaded) loadTablesManage();
             }
 
             /* ── BOOKINGS ── */
@@ -1103,7 +1110,12 @@
             function openMenuModal() {
                 document.getElementById('menuForm').reset();
                 document.getElementById('miEditId').value = '';
-                document.getElementById('miId').readOnly = false;
+
+                // Auto-increment ID
+                const nextId = menuData.length ? Math.max(...menuData.map(m => parseInt(m.id) || 0)) + 1 : 1;
+                document.getElementById('miId').value = nextId;
+                document.getElementById('miId').readOnly = true;
+
                 document.getElementById('menuModalTitle').textContent = 'Add Menu Item';
                 document.getElementById('menuSaveBtn').textContent = 'Save Item';
                 document.getElementById('menuModal').classList.add('open');
@@ -1173,7 +1185,12 @@
             function openTableModal() {
                 document.getElementById('tableForm').reset();
                 document.getElementById('tabEditId').value = '';
-                document.getElementById('tabId').readOnly = false;
+
+                // Auto-increment ID
+                const nextId = tablesData.length ? Math.max(...tablesData.map(t => parseInt(t.id) || 0)) + 1 : 1;
+                document.getElementById('tabId').value = nextId;
+                document.getElementById('tabId').readOnly = true;
+
                 document.getElementById('tableModalTitle').textContent = 'Add Table';
                 document.getElementById('tableSaveBtn').textContent = 'Save Table';
                 document.getElementById('tableModal').classList.add('open');
@@ -1212,21 +1229,6 @@
                     .then(res => { if (res.success) { showToast('Deleted', `"${name}" removed.`); tablesLoaded = false; loadTablesManage(); } else showToast('Error', res.error || 'Failed', 'error'); });
             }
 
-            /* ── OVERRIDE switchTab for TABLES ── */
-            function switchTab(name) {
-                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-                document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
-                document.getElementById('panel-' + name).classList.add('active');
-
-                // Active button class
-                const idx = { bookings: 0, menu: 1, tables: 2 }[name];
-                document.querySelectorAll('.admin-tab')[idx].classList.add('active');
-
-                document.getElementById('bookingActions').style.display = name === 'bookings' ? '' : 'none';
-
-                if (name === 'menu' && !menuLoaded) loadMenuManage();
-                if (name === 'tables' && !tablesLoaded) loadTablesManage();
-            }
 
             /* ── AUTO EMOJI ── */
             const FOOD_EMOJI_MAP = [
