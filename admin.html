@@ -32,7 +32,7 @@
 
         .filter-card {
             background: var(--surface-hi);
-            padding: 1.3rem;
+            padding: 1rem;
             border-radius: var(--r-lg);
             border: 1.5px solid var(--border);
             box-shadow: var(--s-sm);
@@ -43,7 +43,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: .9rem;
-            margin-bottom: 1.4rem;
+            margin-bottom: 0.8rem;
         }
 
         .stat-card {
@@ -88,7 +88,7 @@
             display: flex;
             gap: .3rem;
             border-bottom: 2px solid var(--border);
-            margin-bottom: 1.4rem;
+            margin-bottom: 0.8rem;
         }
 
         .admin-tab {
@@ -125,12 +125,18 @@
             display: block;
         }
 
-        /* ── Data Table ── */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .data-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             font-size: .8rem;
+            min-width: 500px;
         }
 
         .data-table th {
