@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IOCL Officer Club Restaurant — Admin</title>
+    <title>Restro Bar Restaurant — Admin</title>
     <link rel="stylesheet" href="style.css" />
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
@@ -466,7 +466,7 @@
 
     <!-- NAV -->
     <nav class="no-print">
-        <a href="choice.html" class="nav-brand">IOCL Officer Club <span>Admin Dashboard</span></a>
+        <a href="choice.html" class="nav-brand">Restro Bar <span>Admin Dashboard</span></a>
         <ul class="nav-links">
             <li><a href="choice.html" class="nav-link">🏠 <span class="hide-mobile">Home</span></a></li>
             <li><button onclick="logout()" class="btn btn-secondary" style="padding:.35rem .9rem;font-size:.78rem;">🚪
@@ -494,6 +494,9 @@
                     style="padding:.55rem 1.1rem;font-size:.82rem;">⬇ Export CSV</button>
                 <button onclick="fetchData()" class="btn btn-primary" style="padding:.55rem 1.1rem;font-size:.82rem;">🔄
                     Refresh</button>
+                <button onclick="openAdminModal()" class="btn btn-primary"
+                    style="padding:.55rem 1.1rem;font-size:.82rem;background:var(--iocl-blue);box-shadow:none;">+ Add
+                    Admin</button>
             </div>
         </div>
 
@@ -693,6 +696,27 @@
         </div>
 
     </div><!-- /container -->
+
+    <!-- ══ ADD ADMIN MODAL ══ -->
+    <div id="adminModal" class="overlay">
+        <div class="overlay-box" style="max-width: 350px;">
+            <h3 class="text-amber" style="margin-bottom:1.2rem;">Add New Admin</h3>
+            <div class="form-group">
+                <label class="form-label">New Username</label>
+                <input type="text" id="newAdminUser" class="form-input" placeholder="e.g. manager"
+                    style="padding:.65rem .9rem;font-size:.84rem;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" id="newAdminPass" class="form-input" placeholder="••••••••"
+                    style="padding:.65rem .9rem;font-size:.84rem;" />
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.2rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+                <button onclick="addNewAdmin()" class="btn btn-primary" id="btnAddAdmin">+ Add</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ══ EDIT BOOKING MODAL ══ -->
     <div id="editModal" class="overlay">
@@ -931,7 +955,7 @@
             const receiptHtml = `
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; max-width:400px; margin:0 auto; padding:20px; border:1px solid #eee;">
                         <div style="text-align:center; margin-bottom:20px;">
-                            <h2 style="margin:0;">🍽️ IOCL Officer Club</h2>
+                            <h2 style="margin:0;">🍽️ Restro Bar</h2>
                             <p style="margin:5px 0 0; color:#666; font-size:12px;">Restaurant Receipt</p>
                         </div>
                         <div style="margin-bottom:20px; font-size:14px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
@@ -948,15 +972,63 @@
                             <div style="white-space:pre-wrap; line-height:1.5;">${row['Guest Orders'] || 'None'}</div>
                         </div>
                         <div style="border-top:2px solid #000; padding-top:10px; font-size:16px; font-weight:bold; text-align:right;">
-                            Total: ₹${row['Total'] || (Number(row['Subtotal'] || 0) + Number(row['GST'] || 0)) || '0'}
-                        </div>
-                        <div style="text-align:center; margin-top:30px; font-size:12px; color:#666;">
-                            Thank you for your visit!
+                            Total Paid: ₹${row['Total'] || (Number(row['Subtotal'] || 0) + Number(row['GST'] || 0))}
                         </div>
                     </div>
                 `;
-            document.getElementById('printReceipt').innerHTML = receiptHtml;
-            window.print();
+            const win = window.open('', '', 'width=450,height=700');
+            win.document.write(receiptHtml);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); win.close(); }, 500);
+        }
+
+        /* ── ADMIN MANAGEMENT ── */
+        function addNewAdmin() {
+            const user = document.getElementById("newAdminUser").value.trim();
+            const pass = document.getElementById("newAdminPass").value;
+            const btn = document.getElementById("btnAddAdmin");
+
+            if (!user || !pass) {
+                showToast("Error", "Username and password required", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "Adding...";
+
+            fetch(`${SHEET_URL}?action=addAdmin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        showToast("Success", `Admin '${user}' added to system`, "success");
+                        document.getElementById("newAdminUser").value = '';
+                        document.getElementById("newAdminPass").value = '';
+                        closeAdminModal();
+                    } else {
+                        showToast("Error", res.error || "Failed to add admin", "error");
+                    }
+                })
+                .catch(() => showToast("Error", "Network connection failed", "error"))
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = "+ Add Admin";
+                });
+        }
+
+        function openAdminModal() {
+            document.getElementById("adminModal").classList.add('show');
+        }
+
+        function closeAdminModal() {
+            document.getElementById("adminModal").classList.remove('show');
+            document.getElementById("newAdminUser").value = '';
+            document.getElementById("newAdminPass").value = '';
+        }
+
+        /* ── FOOD MENU ── */
+        function fetchMenu() {
+            document.getElementById('menuManageGrid').innerHTML = '<p class="text-muted" style="padding:2rem;">Loading menu…</p>';
         }
 
         function renderTable(data) {

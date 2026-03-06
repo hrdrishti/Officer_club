@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IOCL Officer Club Restaurant</title>
+    <title>Restro Bar Restaurant</title>
     <link rel="stylesheet" href="style.css" />
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
@@ -15,7 +15,7 @@
 
     <nav>
         <a href="choice.html" class="nav-brand">
-            IOCL Officer Club
+            Restro Bar
             <span>Fine Dining</span>
         </a>
         <ul class="nav-links">
@@ -81,6 +81,31 @@
             ["sg_session", "sg_name", "sg_mobile"].forEach(k => sessionStorage.removeItem(k));
             window.location.href = "login.html";
         }
+
+        /* ── PROTECT SOURCE CODE ── */
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.keyCode == 123) { // F12
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'I'.charCodeAt(0)) { // Ctrl+Shift+I
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'C'.charCodeAt(0)) { // Ctrl+Shift+C
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'J'.charCodeAt(0)) { // Ctrl+Shift+J
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.keyCode == 'U'.charCodeAt(0)) { // Ctrl+U
+                event.preventDefault();
+                return false;
+            }
+        });
     </script>
 </body>
 

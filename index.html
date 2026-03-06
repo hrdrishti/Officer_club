@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IOCL Officer Club Restaurant — Order Food</title>
+  <title>Restro Bar Restaurant — Order Food</title>
   <link rel="stylesheet" href="style.css" />
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
@@ -383,7 +383,7 @@
   <!-- NAVIGATION -->
   <nav>
     <a href="choice.html" class="nav-brand">
-      IOCL Officer Club
+      Restro Bar
       <span>Fine Dining</span>
       <ul class="nav-links">
         <li class="hide-mobile"><span id="navUserName"
@@ -628,7 +628,7 @@
 
       // Adjust UI based on mode
       if (MODE === 'both') {
-        document.title = "IOCL Officer Club — Reserve Table";
+        document.title = "Restro Bar — Reserve Table";
         document.getElementById("heroBadge").textContent = "✨ Reserve & Pre-order";
         document.getElementById("heroTitle").innerHTML = "Reserve Your <em>Table</em>";
         document.getElementById("heroText").textContent = "Select a table and pre-order your favorite dishes in one go.";
@@ -969,6 +969,31 @@
     // Close modals on backdrop click
     document.querySelectorAll('.modal-backdrop').forEach(b => {
       b.addEventListener('click', e => { if (e.target === b) b.classList.remove('show'); });
+    });
+
+    /* ── PROTECT SOURCE CODE ── */
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', event => {
+      if (event.keyCode == 123) { // F12
+        event.preventDefault();
+        return false;
+      }
+      if (event.ctrlKey && event.shiftKey && event.keyCode == 'I'.charCodeAt(0)) { // Ctrl+Shift+I
+        event.preventDefault();
+        return false;
+      }
+      if (event.ctrlKey && event.shiftKey && event.keyCode == 'C'.charCodeAt(0)) { // Ctrl+Shift+C
+        event.preventDefault();
+        return false;
+      }
+      if (event.ctrlKey && event.shiftKey && event.keyCode == 'J'.charCodeAt(0)) { // Ctrl+Shift+J
+        event.preventDefault();
+        return false;
+      }
+      if (event.ctrlKey && event.keyCode == 'U'.charCodeAt(0)) { // Ctrl+U
+        event.preventDefault();
+        return false;
+      }
     });
   </script>
 </body>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IOCL Officer Club Restaurant — Sign In</title>
+    <title>Restro Bar Restaurant — Sign In</title>
     <link rel="stylesheet" href="style.css" />
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
@@ -296,7 +296,6 @@
 
             <div class="login-logo">
                 <h1>Restro Bar</h1>
-                <h2>IOCL Officer Club</h2>
                 <p>Restaurant Management</p>
             </div>
 
@@ -306,7 +305,7 @@
                 <button class="login-tab" id="tabAdmin" onclick="switchRole('admin')">🛡️ Admin</button>
             </div>
 
-            <!-- PANEL -->
+            <!-- USER PANEL -->
             <div class="login-panel active" id="guestPanel">
                 <div id="loginView">
                     <div class="form-group" style="text-align:left;">
@@ -370,14 +369,13 @@
                 </button>
             </div>
 
-            <footer>&copy; 2026 IOCL Officer Club Restaurant</footer>
+            <footer>&copy; 2026 Restro Bar Restaurant</footer>
         </div>
     </div>
 
     <script>
         const SESSION_KEY = "sg_session";
         const ADMIN_USER = "admin";
-        const ADMIN_PASS = "admin123";
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
 
         // Already logged in?
@@ -463,18 +461,67 @@
             const user = document.getElementById("adminUser").value.trim();
             const pass = document.getElementById("adminPass").value;
             const err = document.getElementById("adminError");
-            if (user === ADMIN_USER && pass === ADMIN_PASS) {
+            const adminBtn = document.querySelector(".btn-admin");
+
+            if (!user || !pass) { err.textContent = "Enter username and password."; return; }
+            err.textContent = '';
+
+            // Allow universal override just in case sheet fails during setup
+            if (user === ADMIN_USER && pass === "admin123") {
                 sessionStorage.setItem(SESSION_KEY, "admin");
-                sessionStorage.setItem("sg_name", "Admin");
+                sessionStorage.setItem("sg_name", "Super Admin");
                 window.location.href = "admin.html";
-            } else {
-                err.textContent = "Invalid username or password.";
-                document.getElementById("adminPass").value = '';
-                document.getElementById("adminPass").focus();
+                return;
             }
+
+            adminBtn.disabled = true;
+            adminBtn.innerHTML = "Authenticating... <span class='cart-badge'>⏳</span>";
+
+            fetch(`${SHEET_URL}?action=adminLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        sessionStorage.setItem(SESSION_KEY, "admin");
+                        sessionStorage.setItem("sg_name", res.username);
+                        window.location.href = "admin.html";
+                    } else {
+                        err.textContent = res.error || "Invalid admin credentials.";
+                        adminBtn.disabled = false;
+                        adminBtn.innerHTML = "Access Dashboard →";
+                    }
+                })
+                .catch(() => {
+                    err.textContent = "Network error. Try again.";
+                    adminBtn.disabled = false;
+                    adminBtn.innerHTML = "Access Dashboard →";
+                });
         }
+
+        /* ── PROTECT SOURCE CODE ── */
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.keyCode == 123) { // F12
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'I'.charCodeAt(0)) { // Ctrl+Shift+I
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'C'.charCodeAt(0)) { // Ctrl+Shift+C
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.shiftKey && event.keyCode == 'J'.charCodeAt(0)) { // Ctrl+Shift+J
+                event.preventDefault();
+                return false;
+            }
+            if (event.ctrlKey && event.keyCode == 'U'.charCodeAt(0)) { // Ctrl+U
+                event.preventDefault();
+                return false;
+            }
+        });
     </script>
 </body>
-
 
 </html>
