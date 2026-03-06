@@ -1017,11 +1017,11 @@
         }
 
         function openAdminModal() {
-            document.getElementById("adminModal").classList.add('show');
+            document.getElementById("adminModal").classList.add('open');
         }
 
         function closeAdminModal() {
-            document.getElementById("adminModal").classList.remove('show');
+            document.getElementById("adminModal").classList.remove('open');
             document.getElementById("newAdminUser").value = '';
             document.getElementById("newAdminPass").value = '';
         }
@@ -1356,6 +1356,7 @@
         }
         function logout() { sessionStorage.removeItem(SESSION_KEY); window.location.href = 'login.html'; }
     </script>
+    <script src="protect.js"></script>
 </body>
 
 </html>
