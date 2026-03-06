@@ -388,9 +388,15 @@
     </a>
     <ul class="nav-links">
       <li><span id="navUserName" style="font-size:.82rem;font-weight:600;color:var(--ink-60);"></span></li>
-      <li><a href="menu.html" class="nav-link">Full Menu</a></li>
-      <li id="adminLink" style="display:none;"><a href="admin.html" class="nav-link">Admin</a></li>
-      <li><a href="choice.html" class="nav-link">← Back</a></li>
+      <li class="hide-mobile"><a href="menu.html" class="nav-link">Full Menu</a></li>
+      <li id="adminLink" style="display:none;" class="hide-mobile"><a href="admin.html" class="nav-link">Admin</a></li>
+      <li>
+        <button class="nav-cart-btn" onclick="toggleCart()">
+          🛒
+          <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+        </button>
+      </li>
+      <li><a href="choice.html" class="nav-link">🚪 <span class="hide-mobile">Exit</span></a></li>
     </ul>
   </nav>
 
@@ -538,11 +544,7 @@
     </div>
   </div>
 
-  <!-- CART FAB -->
-  <button class="cart-toggle-btn" onclick="toggleCart()" style="position:relative;">
-    🛒
-    <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
-  </button>
+  <!-- (Cart button moved to navbar) -->
 
   <!-- CART DRAWER -->
   <div class="cart-drawer" id="cartDrawer">

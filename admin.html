@@ -52,7 +52,7 @@
             background: var(--surface-hi);
             border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: var(--r-md);
-            padding: 1rem;
+            padding: 0.8rem;
             text-align: center;
             box-shadow: var(--s-xs);
             backdrop-filter: blur(16px);
@@ -92,17 +92,17 @@
         }
 
         .admin-tab {
-            padding: .6rem 1.4rem;
+            padding: .4rem 1rem;
             border: none;
             background: rgba(255, 255, 255, 0.4);
             cursor: pointer;
-            font-size: .88rem;
+            font-size: .8rem;
             font-weight: 700;
             color: var(--ink-60);
             border-bottom: 3px solid transparent;
             margin-bottom: -2px;
             transition: var(--t-fast);
-            border-radius: 8px 8px 0 0;
+            border-radius: 6px 6px 0 0;
             font-family: inherit;
         }
 
@@ -135,7 +135,7 @@
 
         .data-table th {
             text-align: left;
-            padding: 9px 11px;
+            padding: 6px 8px;
             background: var(--smoke);
             color: var(--ink-60);
             font-weight: 700;
@@ -144,7 +144,7 @@
         }
 
         .data-table td {
-            padding: 7px 11px;
+            padding: 5px 8px;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
@@ -186,9 +186,9 @@
 
         /* Action btns */
         .action-btn {
-            padding: 4px 9px;
-            border-radius: 6px;
-            font-size: .7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: .65rem;
             border: none;
             cursor: pointer;
             font-weight: 700;
@@ -217,11 +217,11 @@
             background: var(--surface-hi);
             border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: var(--r-md);
-            padding: 1.2rem;
+            padding: 1rem;
             box-shadow: var(--s-xs);
             display: flex;
             flex-direction: column;
-            gap: .4rem;
+            gap: .3rem;
             backdrop-filter: blur(12px);
             transition: all var(--t-base);
         }
@@ -253,9 +253,9 @@
         }
 
         .btn-edit-sm {
-            padding: 4px 11px;
-            border-radius: 6px;
-            font-size: .7rem;
+            padding: 3px 9px;
+            border-radius: 4px;
+            font-size: .65rem;
             border: none;
             cursor: pointer;
             font-weight: 700;
@@ -459,12 +459,12 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- NAV -->
-    <nav>
+    <nav class="no-print">
         <a href="choice.html" class="nav-brand">IOCL Officer Club <span>Admin Dashboard</span></a>
         <ul class="nav-links">
-            <li><a href="choice.html" class="nav-link">← Home</a></li>
-            <li><button onclick="logout()" class="btn btn-secondary"
-                    style="padding:.35rem .9rem;font-size:.78rem;">Logout</button></li>
+            <li class="hide-mobile"><a href="choice.html" class="nav-link">← Home</a></li>
+            <li><button onclick="logout()" class="btn btn-secondary" style="padding:.35rem .9rem;font-size:.78rem;">🚪
+                    <span class="hide-mobile">Logout</span></button></li>
         </ul>
     </nav>
 
