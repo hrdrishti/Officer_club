@@ -1100,7 +1100,8 @@ textarea.form-input {
   }
 
   .nav-brand {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    gap: 0.3rem;
   }
 
   .nav-brand span {
@@ -1223,12 +1224,16 @@ textarea.form-input {
 
   /* Shrink Navbar */
   nav {
-    padding: 0.4rem 0.8rem;
-    min-height: 50px;
+    padding: 0.4rem 0.5rem;
+    min-height: 48px;
   }
 
   .hide-mobile {
     display: none !important;
+  }
+
+  .nav-links {
+    gap: 0.3rem !important;
   }
 
   /* Compact Login Forms */
