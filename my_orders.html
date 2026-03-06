@@ -18,18 +18,19 @@
 
         .order-card {
             background: var(--surface-hi);
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: var(--r-md);
             padding: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
             box-shadow: var(--s-xs);
-            transition: var(--t-base);
+            backdrop-filter: blur(16px);
+            transition: all var(--t-base);
         }
 
         .order-card:hover {
-            box-shadow: var(--s-sm);
-            border-color: var(--border-hi);
-            transform: translateY(-2px);
+            box-shadow: var(--s-md), 0 8px 16px rgba(243, 112, 33, 0.1);
+            transform: translateY(-4px);
+            border-color: rgba(243, 112, 33, 0.3);
         }
 
         .order-header {
@@ -105,7 +106,7 @@
         .order-total {
             font-size: 1.25rem;
             font-weight: 800;
-            color: var(--amber-dark);
+            color: var(--iocl-orange);
         }
 
         .loading-state {
@@ -246,7 +247,7 @@
             }
 
             container.innerHTML = `
-                <h2 style="margin-bottom:1.5rem; font-size:1.6rem; color:var(--amber-dark);">Your Order History</h2>
+                <h2 style="margin-bottom:1.5rem; font-size:1.6rem; color:var(--iocl-blue);">Your Order History</h2>
                 ${allOrders.map(order => {
                 const statusClass = `status-${(order['Status'] || 'Confirmed').toLowerCase()}`;
                 const items = order['Guest Orders'] || 'None';

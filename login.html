@@ -10,46 +10,283 @@
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
         rel="stylesheet" />
     <style>
+        :root {
+            --iocl-orange: #f37021;
+            --iocl-blue: #001f5b;
+            --iocl-orange-light: #ff8c4a;
+            --iocl-blue-light: #003399;
+            --surface: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
+            --border-clr: rgba(0, 31, 91, 0.1);
+            --shadow-md: 0 10px 30px rgba(0, 31, 91, 0.1);
+            --border-radius: 16px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+        }
+
+        /* ── Modern Premium Container ── */
+        .login-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
         .login-card {
-            animation: heroin .45s ease-out both;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
             text-align: center;
         }
 
-        .login-logo h1 {
-            font-size: 1.9rem;
-            background: var(--amber-grad);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: .3rem;
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .login-logo p {
-            font-size: .72rem;
-            text-transform: uppercase;
-            letter-spacing: 2.5px;
-            color: var(--ink-60);
+        .login-logo {
             margin-bottom: 2rem;
         }
 
-        .form-input {
-            text-align: left;
+        .logo-img {
+            width: 65px;
+            height: auto;
+            margin-bottom: 0.8rem;
         }
 
+        .login-logo h1 {
+            font-size: 1.6rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            margin: 0 0 0.3rem 0;
+            background: linear-gradient(90deg, var(--iocl-orange), var(--iocl-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-logo p {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ── Tab Switcher ── */
+        .login-tabs {
+            display: flex;
+            background: #f1f3f5;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 0.7rem;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-tab.active {
+            background: #fff;
+            color: var(--iocl-blue);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ── Forms ── */
         .login-panel {
             display: none;
+            animation: fadeIn 0.4s ease-out;
+            text-align: left;
         }
 
         .login-panel.active {
             display: block;
-            animation: fadeUp .3s ease-out both;
         }
 
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--iocl-blue);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1.5px solid var(--border-clr);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--iocl-orange);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.15);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--iocl-orange), var(--iocl-orange-light));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(243, 112, 33, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 112, 33, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-admin {
+            background: linear-gradient(135deg, var(--iocl-blue), var(--iocl-blue-light));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 31, 91, 0.3);
+        }
+
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 31, 91, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ── Helpers ── */
         .error-msg {
-            color: var(--red);
-            font-size: .8rem;
-            margin-top: .4rem;
+            color: #dc3545;
+            font-size: 0.8rem;
+            font-weight: 500;
             min-height: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-link {
+            color: var(--iocl-blue);
+            font-weight: 700;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .auth-link:hover {
+            color: var(--iocl-orange);
+            text-decoration: underline;
+        }
+
+        footer {
+            margin-top: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
+            }
+
+            .login-logo h1 {
+                font-size: 1.4rem;
+            }
+
+            body {
+                background: #f8f9fa;
+                /* solid color for mobile feels cleaner */
+            }
+
+            .login-wrap {
+                padding: 0;
+            }
+
+            .login-card {
+                box-shadow: none;
+                border: none;
+                background: transparent;
+            }
+
+            .btn {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -59,8 +296,8 @@
         <div class="login-card">
 
             <div class="login-logo">
-                <h1>🍽️ IOCL Officer Club</h1>
-                <p>Restaurant Management System</p>
+                <h1>IOCL Officer Club</h1>
+                <p>Restaurant Management</p>
             </div>
 
             <!-- Role Tabs -->
@@ -71,18 +308,49 @@
 
             <!-- GUEST PANEL -->
             <div class="login-panel active" id="guestPanel">
-                <div class="form-group" style="text-align:left;">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="guestName" class="form-input" placeholder="Your name" />
+                <div id="loginView">
+                    <div class="form-group" style="text-align:left;">
+                        <label class="form-label">Mobile Number</label>
+                        <input type="tel" id="guestMobile" class="form-input" placeholder="Enter mobile" />
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="guestPass" class="form-input" placeholder="••••••••" />
+                    </div>
+                    <div class="error-msg" id="guestError"></div>
+                    <button onclick="guestLogin()" id="btnLogin" class="btn btn-primary"
+                        style="width:100%;margin-top:.6rem;">
+                        Sign In →
+                    </button>
+                    <p style="text-align:center; font-size:0.85rem; margin-top:1.5rem; color:var(--text-muted);">
+                        New here? <a href="javascript:void(0)" onclick="toggleAuthMode(true)" class="auth-link">Create
+                            an account</a>
+                    </p>
                 </div>
-                <div class="form-group" style="text-align:left;">
-                    <label class="form-label">Mobile Number</label>
-                    <input type="tel" id="guestMobile" class="form-input" placeholder="+91 XXXXX XXXXX" />
+
+                <div id="registerView" style="display:none;">
+                    <div class="form-group" style="text-align:left;">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="regName" class="form-input" placeholder="Enter your name" />
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label class="form-label">Mobile Number</label>
+                        <input type="tel" id="regMobile" class="form-input" placeholder="Enter mobile" />
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label class="form-label">Create Password</label>
+                        <input type="password" id="regPass" class="form-input" placeholder="••••••••" />
+                    </div>
+                    <div class="error-msg" id="regError"></div>
+                    <button onclick="guestRegister()" id="btnRegister" class="btn btn-primary"
+                        style="width:100%;margin-top:.6rem;">
+                        Register Now →
+                    </button>
+                    <p style="text-align:center; font-size:0.85rem; margin-top:1.5rem; color:var(--text-muted);">
+                        Already have an account? <a href="javascript:void(0)" onclick="toggleAuthMode(false)"
+                            class="auth-link">Sign In</a>
+                    </p>
                 </div>
-                <div class="error-msg" id="guestError"></div>
-                <button onclick="guestLogin()" class="btn btn-primary" style="width:100%;margin-top:.6rem;">
-                    Continue →
-                </button>
             </div>
 
             <!-- ADMIN PANEL -->
@@ -97,14 +365,12 @@
                         autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()" />
                 </div>
                 <div class="error-msg" id="adminError"></div>
-                <button onclick="adminLogin()" class="btn btn-primary"
-                    style="width:100%;margin-top:.6rem;background:var(--ink);">
-                    Sign In →
+                <button onclick="adminLogin()" class="btn btn-admin" style="margin-top:0.6rem;">
+                    Access Dashboard →
                 </button>
             </div>
 
-            <footer style="margin-top:2rem;font-size:.72rem;color:var(--ink-60);">&copy; 2026 IOCL Officer Club
-                Restaurant</footer>
+            <footer>&copy; 2026 IOCL Officer Club Restaurant</footer>
         </div>
     </div>
 
@@ -112,6 +378,7 @@
         const SESSION_KEY = "sg_session";
         const ADMIN_USER = "admin";
         const ADMIN_PASS = "admin123";
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxVa7y4qFx9wVVTmON9SIad3h_4GQFsfzVQ68TyN9iTywfu3mvAQOVsOIjkJGXv4YA/exec";
 
         // Already logged in?
         if (sessionStorage.getItem(SESSION_KEY)) {
@@ -128,17 +395,68 @@
             document.getElementById(role === 'guest' ? 'guestError' : 'adminError').textContent = '';
         }
 
+        function toggleAuthMode(isReg) {
+            document.getElementById('loginView').style.display = isReg ? 'none' : 'block';
+            document.getElementById('registerView').style.display = isReg ? 'block' : 'none';
+        }
+
         function guestLogin() {
-            const name = document.getElementById("guestName").value.trim();
             const mobile = document.getElementById("guestMobile").value.trim();
+            const pass = document.getElementById("guestPass").value;
             const err = document.getElementById("guestError");
-            if (!name) { err.textContent = "Please enter your name."; return; }
-            if (!mobile) { err.textContent = "Please enter your mobile number."; return; }
+            const btn = document.getElementById("btnLogin");
+
+            if (!mobile || !pass) { err.textContent = "Enter mobile and password."; return; }
             err.textContent = '';
-            sessionStorage.setItem(SESSION_KEY, "guest");
-            sessionStorage.setItem("sg_name", name);
-            sessionStorage.setItem("sg_mobile", mobile);
-            window.location.href = "choice.html";
+            btn.disabled = true; btn.textContent = "Verifying...";
+
+            fetch(`${SHEET_URL}?action=login&mobile=${encodeURIComponent(mobile)}&password=${encodeURIComponent(pass)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        sessionStorage.setItem(SESSION_KEY, "guest");
+                        sessionStorage.setItem("sg_name", res.name);
+                        sessionStorage.setItem("sg_mobile", res.mobile);
+                        window.location.href = "choice.html";
+                    } else {
+                        err.textContent = res.error || "Invalid credentials.";
+                        btn.disabled = false; btn.textContent = "Sign In →";
+                    }
+                })
+                .catch(() => {
+                    err.textContent = "Network error. Try again.";
+                    btn.disabled = false; btn.textContent = "Sign In →";
+                });
+        }
+
+        function guestRegister() {
+            const name = document.getElementById("regName").value.trim();
+            const mobile = document.getElementById("regMobile").value.trim();
+            const pass = document.getElementById("regPass").value;
+            const err = document.getElementById("regError");
+            const btn = document.getElementById("btnRegister");
+
+            if (!name || !mobile || !pass) { err.textContent = "All fields are required."; return; }
+            err.textContent = '';
+            btn.disabled = true; btn.textContent = "Registering...";
+
+            fetch(`${SHEET_URL}?action=register&name=${encodeURIComponent(name)}&mobile=${encodeURIComponent(mobile)}&password=${encodeURIComponent(pass)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        sessionStorage.setItem(SESSION_KEY, "guest");
+                        sessionStorage.setItem("sg_name", name);
+                        sessionStorage.setItem("sg_mobile", mobile);
+                        window.location.href = "choice.html";
+                    } else {
+                        err.textContent = res.error || "Registration failed.";
+                        btn.disabled = false; btn.textContent = "Register Now →";
+                    }
+                })
+                .catch(() => {
+                    err.textContent = "Network error. Try again.";
+                    btn.disabled = false; btn.textContent = "Register Now →";
+                });
         }
 
         function adminLogin() {
