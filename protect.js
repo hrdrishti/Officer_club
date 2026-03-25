@@ -7,12 +7,6 @@
 (function () {
     'use strict';
 
-    /* 1. Block right-click context menu */
-    document.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        return false;
-    });
-
     /* 2. Disable text selection site-wide */
     document.addEventListener('selectstart', function (e) {
         e.preventDefault();
